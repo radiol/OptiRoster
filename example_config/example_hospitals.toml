@@ -1,0 +1,265 @@
+﻿# 病院1
+[[hospitals]]
+name = "病院1"
+is_remote = false
+is_university = true
+
+[[hospitals.shifts]]
+shift_type = "当直"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+frequency = "毎週"
+
+# 病院2
+[[hospitals]]
+name = "病院2"
+is_remote = true
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "日勤"
+weekdays = ["火曜", "水曜", "金曜"]
+frequency = "毎週"
+
+[[hospitals.shifts]]
+shift_type = "AM"
+weekdays = ["木曜"]
+frequency = "隔週"
+
+# 病院2-治療
+[[hospitals]]
+name = "病院2-治療"
+is_remote = true
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "日勤"
+weekdays = ["月曜", "火曜"]
+frequency = "毎週"
+
+# 病院3
+[[hospitals]]
+name = "病院3"
+is_remote = true
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "日勤"
+weekdays = ["水曜"]
+frequency = "毎週"
+
+# 病院4
+[[hospitals]]
+name = "病院4"
+is_remote = true
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "日勤"
+weekdays = ["月曜", "火曜", "金曜"]
+frequency = "毎週"
+
+# 病院5
+[[hospitals]]
+name = "病院5"
+is_remote = true
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "AM"
+weekdays = ["月曜"]
+frequency = "隔週"
+
+[[hospitals.shifts]]
+shift_type = "AM"
+weekdays = ["木曜"]
+frequency = "毎週"
+
+# 病院5-治療
+[[hospitals]]
+name = "病院5-治療"
+is_remote = true
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "PM"
+weekdays = ["木曜"]
+frequency = "指定日"
+
+# 病院6
+[[hospitals]]
+name = "病院6"
+is_remote = true
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "PM"
+weekdays = ["木曜"]
+frequency = "毎週"
+
+[[hospitals.shifts]]
+shift_type = "AM"
+weekdays = ["月曜"]
+frequency = "隔週"
+
+# 病院7
+[[hospitals]]
+name = "病院7"
+is_remote = true
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "日勤"
+weekdays = ["月曜"]
+frequency = "毎週"
+
+# 病院8
+[[hospitals]]
+name = "病院8"
+is_remote = false
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "日勤"
+weekdays = ["火曜", "木曜", "土曜"]
+frequency = "毎週"
+
+# 病院9
+[[hospitals]]
+name = "病院9"
+is_remote = false
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "日勤"
+weekdays = ["火曜", "木曜"]
+frequency = "毎週"
+
+# 病院10
+[[hospitals]]
+name = "病院10"
+is_remote = true
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "日勤"
+weekdays = ["火曜"]
+frequency = "毎週"
+
+[[hospitals.shifts]]
+shift_type = "AM"
+weekdays = ["木曜"]
+frequency = "毎週"
+
+# 病院10-治療
+[[hospitals]]
+name = "病院10-治療"
+is_remote = true
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "日勤"
+weekdays = ["水曜", "木曜"]
+frequency = "毎週"
+
+# 病院11
+[[hospitals]]
+name = "病院11"
+is_remote = true
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "AM"
+weekdays = ["火曜"]
+frequency = "毎週"
+
+[[hospitals.shifts]]
+shift_type = "PM"
+weekdays = ["木曜"]
+frequency = "毎週"
+
+# 病院12
+[[hospitals]]
+name = "病院12"
+is_remote = false
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "AM"
+weekdays = ["火曜"]
+frequency = "隔週"
+
+[[hospitals.shifts]]
+shift_type = "AM"
+weekdays = ["水曜"]
+frequency = "毎週"
+
+[[hospitals.shifts]]
+shift_type = "日勤"
+weekdays = ["金曜"]
+frequency = "毎週"
+
+# 病院13
+[[hospitals]]
+name = "病院13"
+is_remote = false
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "AM"
+weekdays = ["木曜"]
+frequency = "毎週"
+
+# 病院13-治療
+[[hospitals]]
+name = "病院13-治療"
+is_remote = false
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "AM"
+weekdays = ["火曜"]
+frequency = "毎週"
+
+# 病院14
+[[hospitals]]
+name = "病院14"
+is_remote = false
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "PM"
+weekdays = ["火曜"]
+frequency = "隔週"
+
+# 病院15
+[[hospitals]]
+name = "病院15"
+is_remote = false
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "当直"
+weekdays = ["木曜"]
+frequency = "指定日"
+
+# 病院16
+[[hospitals]]
+name = "病院16"
+is_remote = false
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "当直"
+weekdays = ["月曜", "日曜"]
+frequency = "指定日"
+
+# 病院17
+[[hospitals]]
+name = "病院17"
+is_remote = false
+is_university = false
+
+[[hospitals.shifts]]
+shift_type = "当直"
+weekdays = ["土曜"]
+frequency = "指定日"

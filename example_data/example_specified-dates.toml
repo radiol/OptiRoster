@@ -1,0 +1,15 @@
+﻿[[hospitals]]
+name = "病院5-治療"
+dates = [2, 16, 30]
+
+[[hospitals]]
+name = "病院15"
+dates = [2, 9, 16, 23, 30]
+
+[[hospitals]]
+name = "病院16"
+dates = [6, 12, 13, 20, 26, 27]
+
+[[hospitals]]
+name = "病院17"
+dates = [4, 18]

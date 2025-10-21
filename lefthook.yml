@@ -1,0 +1,36 @@
+# EXAMPLE USAGE:
+#
+#   Refer for explanation to following link:
+#   https://lefthook.dev/configuration/
+#
+pre-push:
+  parallel: true
+  jobs:
+    - name: ruff-check
+      run: uv run ruff check
+    - name: mypy
+      exclude:
+        - "tests/**"
+      run: uv run mypy
+    - name: pytest
+      tags:
+        - test
+      run: uv run -m pytest -q
+pre-commit:
+  parallel: true
+  jobs:
+    - name: ruff-format
+      glob: "*.py"
+      exclude:
+        - "docs/**"
+        - "config/**"
+        - "data/**"
+      run: uv run ruff format {staged_files}
+      stage_fixed: true # フォーマットしたら自動add
+    - name: ruff-check
+      glob: "*.py"
+      run: uv run ruff check --fix {staged_files}
+    - name: mypy
+      exclude:
+        - "tests/**"
+      run: uv run mypy src

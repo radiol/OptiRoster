@@ -1,0 +1,484 @@
+﻿# 診断01
+[[workers]]
+name = "診断01"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院12"
+weekdays = ["金曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院13"
+weekdays = ["木曜"]
+shift_type = "AM"
+
+# 診断02
+[[workers]]
+name = "診断02"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院4"
+weekdays = ["金曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院11"
+weekdays = ["火曜"]
+shift_type = "AM"
+
+[[workers.assignments]]
+hospital = "病院16"
+weekdays = ["日曜", "月曜"]
+shift_type = "当直"
+
+# 診断03
+[[workers]]
+name = "診断03"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院2"
+weekdays = ["水曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院11"
+weekdays = ["火曜"]
+shift_type = "AM"
+
+[[workers.assignments]]
+hospital = "病院16"
+weekdays = ["月曜", "日曜"]
+shift_type = "当直"
+
+# 診断04
+[[workers]]
+name = "診断04"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院2"
+weekdays = ["木曜"]
+shift_type = "AM"
+
+[[workers.assignments]]
+hospital = "病院4"
+weekdays = ["月曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院8"
+weekdays = ["土曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院16"
+weekdays = ["月曜", "日曜"]
+shift_type = "当直"
+
+# 診断05
+[[workers]]
+name = "診断05"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院5"
+weekdays = ["月曜"]
+shift_type = "AM"
+
+[[workers.assignments]]
+hospital = "病院5"
+weekdays = ["木曜"]
+shift_type = "AM"
+
+[[workers.assignments]]
+hospital = "病院6"
+weekdays = ["木曜"]
+shift_type = "PM"
+
+[[workers.assignments]]
+hospital = "病院16"
+weekdays = ["月曜", "日曜"]
+shift_type = "当直"
+
+# 診断06
+[[workers]]
+name = "診断06"
+is_diagnostic_specialist = false
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院10"
+weekdays = ["火曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院12"
+weekdays = ["水曜"]
+shift_type = "AM"
+
+[[workers.assignments]]
+hospital = "病院15"
+weekdays = ["木曜"]
+shift_type = "当直"
+
+# 診断07
+[[workers]]
+name = "診断07"
+is_diagnostic_specialist = false
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院7"
+weekdays = ["月曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院12"
+weekdays = ["水曜"]
+shift_type = "AM"
+
+[[workers.assignments]]
+hospital = "病院15"
+weekdays = ["木曜"]
+shift_type = "当直"
+
+# 診断08
+[[workers]]
+name = "診断08"
+is_diagnostic_specialist = false
+
+# 診断09
+[[workers]]
+name = "診断09"
+is_diagnostic_specialist = false
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院3"
+weekdays = ["水曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院14"
+weekdays = ["火曜"]
+shift_type = "PM"
+
+[[workers.assignments]]
+hospital = "病院15"
+weekdays = ["木曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院16"
+weekdays = ["月曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院16"
+weekdays = ["日曜"]
+shift_type = "当直"
+
+# 診断10
+[[workers]]
+name = "診断10"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院2"
+weekdays = ["火曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院12"
+weekdays = ["金曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院8"
+weekdays = ["土曜"]
+shift_type = "日勤"
+
+# IVR01
+[[workers]]
+name = "IVR01"
+is_diagnostic_specialist = true
+
+# [[workers.assignments]]
+# hospital = "病院1"
+# weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+# shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院2"
+weekdays = ["金曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院8"
+weekdays = ["土曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院9"
+weekdays = ["火曜"]
+shift_type = "日勤"
+
+# IVR02
+[[workers]]
+name = "IVR02"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院2"
+weekdays = ["金曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院8"
+weekdays = ["土曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院9"
+weekdays = ["木曜"]
+shift_type = "日勤"
+
+# IVR03
+[[workers]]
+name = "IVR03"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院2"
+weekdays = ["金曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院10"
+weekdays = ["木曜"]
+shift_type = "AM"
+
+[[workers.assignments]]
+hospital = "病院11"
+weekdays = ["木曜"]
+shift_type = "PM"
+
+# IVR04
+[[workers]]
+name = "IVR04"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院2"
+weekdays = ["金曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院4"
+weekdays = ["火曜"]
+shift_type = "日勤"
+
+# IVR05
+[[workers]]
+name = "IVR05"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院6"
+weekdays = ["月曜"]
+shift_type = "AM"
+
+[[workers.assignments]]
+hospital = "病院8"
+weekdays = ["火曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院8"
+weekdays = ["土曜"]
+shift_type = "日勤"
+
+# IVR06
+[[workers]]
+name = "IVR06"
+is_diagnostic_specialist = false
+
+# IVR07
+[[workers]]
+name = "IVR07"
+is_diagnostic_specialist = false
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院8"
+weekdays = ["木曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院12"
+weekdays = ["火曜"]
+shift_type = "AM"
+
+[[workers.assignments]]
+hospital = "病院16"
+weekdays = ["日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院16"
+weekdays = ["月曜"]
+shift_type = "当直"
+
+# 治療01
+[[workers]]
+name = "治療01"
+is_diagnostic_specialist = false
+
+[[workers.assignments]]
+hospital = "病院10-治療"
+weekdays = ["木曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院13-治療"
+weekdays = ["火曜"]
+shift_type = "AM"
+
+# 治療02
+[[workers]]
+name = "治療02"
+is_diagnostic_specialist = false
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["木曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院2-治療"
+weekdays = ["火曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院10-治療"
+weekdays = ["水曜"]
+shift_type = "日勤"
+
+# 治療03
+[[workers]]
+name = "治療03"
+is_diagnostic_specialist = false
+
+# 治療04
+[[workers]]
+name = "治療04"
+is_diagnostic_specialist = false
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["火曜", "水曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院2-治療"
+weekdays = ["月曜"]
+shift_type = "日勤"
+
+[[workers.assignments]]
+hospital = "病院5-治療"
+weekdays = ["木曜"]
+shift_type = "PM"
+
+[[workers.assignments]]
+hospital = "病院17"
+weekdays = ["土曜"]
+shift_type = "当直"
+
+# 治療05
+[[workers]]
+name = "治療05"
+is_diagnostic_specialist = false
+
+# [[workers.assignments]]
+# hospital = "病院1"
+# weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
+# shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院15"
+weekdays = ["木曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院16"
+weekdays = ["月曜", "日曜"]
+shift_type = "当直"
+
+[[workers.assignments]]
+hospital = "病院17"
+weekdays = ["土曜"]
+shift_type = "当直"

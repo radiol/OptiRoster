@@ -1,0 +1,60 @@
+[project]
+name = "optiroster"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "jpholiday>=1.0",
+    "openpyxl>=3.1",
+    "pandas>=2.3",
+    "pulp>=3.2",
+    "pyside6>=6.9",
+    "rich>=14.1",
+    "tomlkit>=0.13",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17",
+    "pytest>=8.4",
+    "ruff>=0.12",
+    "types-openpyxl>=3.1.5.20250822",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+[tool.ruff.lint]
+# 好みで調整。主要ルールセット例:
+select = [
+    "E",
+    "F",    # pycodestyle/pyflakes
+    "I",    # import order (isort 相当)
+    "B",    # flake8-bugbear
+    "UP",   # pyupgrade
+    "SIM",  # flake8-simplify
+    "PERF", # performance
+    "RUF",  # ruff 独自
+]
+ignore = [
+    # 必要に応じて一部無効化
+]
+
+[tool.ruff.format]
+# Black 準拠のフォーマッタ設定（必要なら調整）
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.13"
+# 対象をsrcディレクトリに限定
+files = ["src"]
+# チェックを厳格にする場合、strict = true を指定
+strict = true
+
+# pulp の型情報が不十分なため、以下の ignore_missing_imports を指定
+[[tool.mypy.overrides]]
+module = ["pulp.*", "openpyxl.*", "jpholiday.*", "pandas.*"]
+ignore_missing_imports = true
