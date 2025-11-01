@@ -180,3 +180,38 @@ def test_is_last_holiday_singleton_is_false():
     if d is None:
         pytest.skip("単発の土日祝が探索範囲で見つからずスキップ")
     assert is_last_holiday(d) is False
+
+
+def test_is_year_end_holiday():
+    """
+    年末の12月28日~31日が祝日であることを確認。
+    """
+    year = 2025  # 例として2025年を使用
+    dec_28 = dt.date(year, 12, 28)
+    dec_29 = dt.date(year, 12, 29)
+    dec_30 = dt.date(year, 12, 30)
+    dec_31 = dt.date(year, 12, 31)
+    assert is_holiday_or_weekend(dec_28) is True
+    assert is_holiday_or_weekend(dec_29) is True
+    assert is_holiday_or_weekend(dec_30) is True
+    assert is_holiday_or_weekend(dec_31) is True
+    # 年末の12月26日は祝日ではないことを確認
+    dec_26 = dt.date(year, 12, 26)
+    assert is_holiday_or_weekend(dec_26) is False
+
+
+def test_is_new_year_holiday():
+    """
+    年始の1月1日~3日が祝日であることを確認。
+    """
+    year = 2026  # 例として2026年を使用
+    jan_1 = dt.date(year, 1, 1)
+    jan_2 = dt.date(year, 1, 2)
+    jan_3 = dt.date(year, 1, 3)
+    assert is_holiday_or_weekend(jan_1) is True
+    assert is_holiday_or_weekend(jan_2) is True
+    assert is_holiday_or_weekend(jan_3) is True
+
+    # 年始の1月5日は祝日ではないことを確認
+    jan_5 = dt.date(year, 1, 5)
+    assert is_holiday_or_weekend(jan_5) is False
