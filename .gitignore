@@ -10,9 +10,6 @@ lefthook-local.yml # lefthookの個人用設定ファイル
 # Claude
 .serena/
 
-# Github copilot
-.github/
-
 # Python-generated files
 __pycache__/
 *.py[oc]
