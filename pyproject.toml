@@ -25,6 +25,7 @@ dev = [
 [tool.ruff]
 target-version = "py313"
 line-length = 100
+exclude = ["tests/**", ".venv/**"]
 [tool.ruff.lint]
 # 好みで調整。主要ルールセット例:
 select = [
