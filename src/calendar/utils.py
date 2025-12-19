@@ -28,7 +28,7 @@ def _is_weekend(d: dt.date) -> bool:
 
 def is_public_holiday(d: dt.date) -> bool:
     """平日の祝日かどうか(= 祝日 かつ 土日ではない)"""
-    return jpholiday.is_holiday(d) and not _is_weekend(d)
+    return is_holiday_or_weekend(d) and not _is_weekend(d)
 
 
 def is_holiday_or_weekend(d: dt.date) -> bool:
