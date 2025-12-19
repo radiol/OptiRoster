@@ -11,7 +11,7 @@ if %ERRORLEVEL% neq 0 (
     REM 1) try winget
     where winget >nul 2>nul
     if %ERRORLEVEL% equ 0 (
-        winget install --id Astral-UV.UV -e --silent
+        winget install --id astral-sh.uv -e --silent
     )
 
     REM 2) if still not found, run official installer via PowerShell (no .ps1 files)
@@ -42,6 +42,14 @@ where uv >nul 2>nul
 if %ERRORLEVEL% neq 0 (
     echo [error] failed to install uv.
     exit /b 1
+)
+
+REM ---- run the app ----
+REM CIではGUIを起動せず、importできるかだけ確認
+if /i "%~1"=="--ci" (
+    uv --version || exit /b 1
+    uv run -c "import src.gui.app; print('smoke: import ok')" || exit /b 1
+    exit /b 0
 )
 
 REM ---- run the GUI app ----
