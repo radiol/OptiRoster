@@ -1,0 +1,35 @@
+name: macOS CI (install uv via script)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  macos-install-uv-and-smoke:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Test script installs uv when missing
+        shell: bash
+        run: |
+          set -euxo pipefail
+
+          chmod +x ./launch-gui.command
+
+          # Make sure uv/brew are NOT visible (force official installer path)
+          export PATH="/usr/bin:/bin"
+
+          # Assert uv is missing before running script
+          if command -v uv >/dev/null 2>&1; then
+            echo "uv unexpectedly found on PATH"
+            which uv || true
+            exit 1
+          fi
+
+          # Run CI mode (should install uv to ./.uv-bin and smoke import)
+          ./launch-gui.command --ci
+
+          # Verify installed uv is the one we expect
+          test -x "./.uv-bin/uv"
+          "./.uv-bin/uv" --version
