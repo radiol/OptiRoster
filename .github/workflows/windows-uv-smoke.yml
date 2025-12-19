@@ -1,0 +1,13 @@
+name: windows-uv-smoke
+on:
+  push:
+  pull_request:
+jobs:
+  smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Smoke test (install uv + import)
+        shell: cmd
+        run: |
+          call .\launch-gui.bat --ci
