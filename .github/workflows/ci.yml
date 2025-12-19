@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      # lock を “更新させない” で環境構築したいなら --frozen を使う
+      # lock が更新必要なら CI を落として気付ける :contentReference[oaicite:1]{index=1}
+      - name: Install (from lock)
+        run: |
+          uv sync --frozen
+
+      - name: Ruff format (check)
+        run: |
+          uv run --frozen ruff format --check .
+          # ruff format --check は「整形が必要ならexit 1」になる :contentReference[oaicite:2]{index=2}
+
+      - name: Ruff lint
+        run: |
+          uv run --frozen ruff check .
+
+      - name: Mypy
+        run: |
+          uv run --frozen mypy src
+
+      - name: Pytest
+        run: |
+          uv run --frozen -m pytest -q
