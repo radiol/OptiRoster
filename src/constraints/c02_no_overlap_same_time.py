@@ -6,6 +6,7 @@ import pulp
 
 from src.domain.context import Context, VarKey
 from src.domain.types import ShiftType
+from src.calendar.utils import is_holiday_or_weekend
 
 from .base import register
 from .base_impl import ConstraintBase
@@ -17,6 +18,7 @@ class NoOverlapSameTimeAcrossHospitals(ConstraintBase):
     - 同一シフト: DAY-DAY / AM-AM / PM-PM / NIGHT-NIGHT ≤ 1
     - 追加の重複: DAY-AM, DAY-PM ≤ 1
     (AM-PM は許容)
+    - 休日の場合はNIGHTシフトは他のシフトと重複禁止
     """
 
     name = "no_overlap_same_time_across_hospitals"
@@ -60,6 +62,26 @@ class NoOverlapSameTimeAcrossHospitals(ConstraintBase):
                     pulp.lpSum(day_pm) <= 1,
                     f"no_overlap_DAY_PM_{w}_{d.strftime('%Y%m%d')}",
                 )
+            # 4) 休日のNIGHTと他シフトの重複禁止
+            if is_holiday_or_weekend(d):
+                night_day = vars_by_shift.get(ShiftType.NIGHT, []) + vars_by_shift.get(ShiftType.DAY, [])
+                night_am = vars_by_shift.get(ShiftType.NIGHT, []) + vars_by_shift.get(ShiftType.AM, [])
+                night_pm = vars_by_shift.get(ShiftType.NIGHT, []) + vars_by_shift.get(ShiftType.PM, [])
+                if night_day:
+                    model += (
+                        pulp.lpSum(night_day) <= 1,
+                        f"no_overlap_NIGHT_DAY_{w}_{d.strftime('%Y%m%d')}",
+                    )
+                if night_am:
+                    model += (
+                        pulp.lpSum(night_am) <= 1,
+                        f"no_overlap_NIGHT_AM_{w}_{d.strftime('%Y%m%d')}",
+                    )
+                if night_pm:
+                    model += (
+                        pulp.lpSum(night_pm) <= 1,
+                        f"no_overlap_NIGHT_PM_{w}_{d.strftime('%Y%m%d')}",
+                    )
 
 
 register(NoOverlapSameTimeAcrossHospitals())
