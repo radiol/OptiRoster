@@ -125,3 +125,84 @@ def test_night_overlap_forbidden_across_hospitals():
     s = m.solve(pulp.PULP_CBC_CMD(msg=False))
     assert pulp.LpStatus[s] == "Optimal"
     assert sum(pulp.value(v) for v in x.values()) == 1
+
+
+def test_night_with_day_allowed_on_weekday():
+    """
+    平日: NIGHT は DAY と同一日に可能(現状仕様)
+    -> 合計2つ選べる
+    """
+    import src.constraints.c02_no_overlap_same_time  # noqa: F401
+    from src.constraints.base import all_constraints
+
+    (constraint,) = all_constraints()
+
+    h1, h2 = "A病院", "B病院"
+    w = "鈴木"
+    d = dt.date(2025, 9, 4)  # Thu (weekday)
+
+    x = {
+        (h1, w, d, ShiftType.NIGHT): pulp.LpVariable("x_weekday_NIGHT", 0, 1, cat="Binary"),
+        (h2, w, d, ShiftType.DAY): pulp.LpVariable("x_weekday_DAY", 0, 1, cat="Binary"),
+    }
+    m = pulp.LpProblem("weekday_night_day", pulp.LpMaximize)
+    m += pulp.lpSum(x.values())
+
+    constraint.apply(m, x, ctx={})
+    s = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    assert pulp.LpStatus[s] == "Optimal"
+    assert sum(pulp.value(v) for v in x.values()) == 2  # both can be chosen
+
+
+def test_night_with_day_forbidden_on_holiday_or_weekend():
+    """
+    休日(土日祝+年末年始): NIGHT は1日勤務扱い
+    -> NIGHT と DAY は同一日に不可 -> 合計1つだけ
+    """
+    import src.constraints.c02_no_overlap_same_time  # noqa: F401
+    from src.constraints.base import all_constraints
+
+    (constraint,) = all_constraints()
+
+    h1, h2 = "A病院", "B病院"
+    w = "伊藤"
+    d = dt.date(2025, 12, 29)  # Mon, but year-end/new-year rule => holiday_or_weekend == True
+
+    x = {
+        (h1, w, d, ShiftType.NIGHT): pulp.LpVariable("x_holi_NIGHT", 0, 1, cat="Binary"),
+        (h2, w, d, ShiftType.DAY): pulp.LpVariable("x_holi_DAY", 0, 1, cat="Binary"),
+    }
+    m = pulp.LpProblem("holiday_night_day", pulp.LpMaximize)
+    m += pulp.lpSum(x.values())
+
+    constraint.apply(m, x, ctx={})
+    s = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    assert pulp.LpStatus[s] == "Optimal"
+    assert sum(pulp.value(v) for v in x.values()) == 1  # only one can be chosen
+
+
+def test_am_pm_still_allowed_on_holiday_or_weekend():
+    """
+    休日でも AM-PM は許容(現状仕様維持)
+    -> 合計2つ選べる
+    """
+    import src.constraints.c02_no_overlap_same_time  # noqa: F401
+    from src.constraints.base import all_constraints
+
+    (constraint,) = all_constraints()
+
+    h1, h2 = "A病院", "B病院"
+    w = "田中"
+    d = dt.date(2025, 12, 29)  # holiday_or_weekend == True
+
+    x = {
+        (h1, w, d, ShiftType.AM): pulp.LpVariable("x_holi_AM", 0, 1, cat="Binary"),
+        (h2, w, d, ShiftType.PM): pulp.LpVariable("x_holi_PM", 0, 1, cat="Binary"),
+    }
+    m = pulp.LpProblem("holiday_am_pm", pulp.LpMaximize)
+    m += pulp.lpSum(x.values())
+
+    constraint.apply(m, x, ctx={})
+    s = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    assert pulp.LpStatus[s] == "Optimal"
+    assert sum(pulp.value(v) for v in x.values()) == 2  # both can be chosen
