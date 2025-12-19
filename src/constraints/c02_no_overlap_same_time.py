@@ -4,9 +4,9 @@ from typing import ClassVar, override
 
 import pulp
 
+from src.calendar.utils import is_holiday_or_weekend
 from src.domain.context import Context, VarKey
 from src.domain.types import ShiftType
-from src.calendar.utils import is_holiday_or_weekend
 
 from .base import register
 from .base_impl import ConstraintBase
@@ -64,9 +64,15 @@ class NoOverlapSameTimeAcrossHospitals(ConstraintBase):
                 )
             # 4) 休日のNIGHTと他シフトの重複禁止
             if is_holiday_or_weekend(d):
-                night_day = vars_by_shift.get(ShiftType.NIGHT, []) + vars_by_shift.get(ShiftType.DAY, [])
-                night_am = vars_by_shift.get(ShiftType.NIGHT, []) + vars_by_shift.get(ShiftType.AM, [])
-                night_pm = vars_by_shift.get(ShiftType.NIGHT, []) + vars_by_shift.get(ShiftType.PM, [])
+                night_day = vars_by_shift.get(ShiftType.NIGHT, []) + vars_by_shift.get(
+                    ShiftType.DAY, []
+                )
+                night_am = vars_by_shift.get(ShiftType.NIGHT, []) + vars_by_shift.get(
+                    ShiftType.AM, []
+                )
+                night_pm = vars_by_shift.get(ShiftType.NIGHT, []) + vars_by_shift.get(
+                    ShiftType.PM, []
+                )
                 if night_day:
                     model += (
                         pulp.lpSum(night_day) <= 1,
