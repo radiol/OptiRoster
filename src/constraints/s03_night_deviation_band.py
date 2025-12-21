@@ -18,12 +18,12 @@ from .penalty_utils import add_penalties
 class SoftNightDeviationBand(ConstraintBase):
     """
     病院ごとに、Night の“重み付き”回数を平均±1のバンドに収めるよう誘導するソフト制約。
-        - 重み: 平日=1.0, 休日(=土日祝)=1.5(整数化したい場合は 2/3 に変えてOK)
+        - 重み: 平日=1.0, 休日(=土日祝)=2.0
         - A_h = T_h / K_h (T_h: その病院の月間 Night 総重み、K_h: Nightに入れる候補者数)
         - 各 worker の c_{h,w}(重み付き回数)に対して:
             over >= c_{h,w} - ceil(A_h)
             under >= floor(A_h) - c_{h,w}
-        を置き、over/under を目的で罰する(weight_over/underでそれぞれ重み付け)
+        を置き、平均から超える(over)か下回る(under)でそれぞれペナルティを追加
 
     requires: {"hospitals"}  # days/workers は x から復元する
     """
@@ -41,11 +41,11 @@ class SoftNightDeviationBand(ConstraintBase):
     ):
         self.weight_over = float(weight_over)
         self.weight_under = float(weight_under)
-        self.min_cand = int(min_candidate_nights)
-        self.holi_w = float(holiday_weight)
+        self.min_candidate_nights = int(min_candidate_nights)
+        self.holiday_weight = float(holiday_weight)
 
-    def _wd(self, d: date) -> float:
-        return self.holi_w if is_holiday_or_weekend(d) else 1.0
+    def _get_holiday_weight(self, d: date) -> float:
+        return self.holiday_weight if is_holiday_or_weekend(d) else 1.0
 
     @override
     def apply(
@@ -69,15 +69,19 @@ class SoftNightDeviationBand(ConstraintBase):
         penalty_items = []
 
         for h in (hh.name for hh in hospitals):
-            # その病院で Night に入れる候補者(候補日が min_cand 以上)
-            Wh = [w for (hh, w) in hw_vars if hh == h and len(hw_vars[(h, w)]) >= self.min_cand]
+            # その病院で Night に入れる候補者(候補日が min_candidate_nights 以上)
+            Wh = [
+                w
+                for (hh, w) in hw_vars
+                if hh == h and len(hw_vars[(h, w)]) >= self.min_candidate_nights
+            ]
             Kh = len(Wh)
             days_h = sorted(night_days_by_h.get(h, []))
             if Kh <= 1 or not days_h:
                 continue
 
             # 総需要(重み付き) T_h と平均 A_h
-            Th = sum(self._wd(d) for d in days_h)
+            Th = sum(self._get_holiday_weight(d) for d in days_h)
             Ah = Th / Kh
             Lh = int(Ah)  # floor
             Uh = Lh + 1  # ceil
@@ -85,7 +89,7 @@ class SoftNightDeviationBand(ConstraintBase):
             # 各人の重み付きカウント
             counts = {}
             for w in Wh:
-                terms = [self._wd(d) * var for (d, var) in hw_vars[(h, w)]]
+                terms = [self._get_holiday_weight(d) * var for (d, var) in hw_vars[(h, w)]]
                 counts[w] = pulp.lpSum(terms) if terms else pulp.lpSum([])
 
             # バンド外だけペナルティ
