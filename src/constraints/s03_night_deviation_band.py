@@ -18,12 +18,12 @@ from .penalty_utils import add_penalties
 class SoftNightDeviationBand(ConstraintBase):
     """
     病院ごとに、Night の“重み付き”回数を平均±1のバンドに収めるよう誘導するソフト制約。
-        - 重み: 平日=1.0, 休日(=土日祝)=1.5(整数化したい場合は 2/3 に変えてOK)
+        - 重み: 平日=1.0, 休日(=土日祝)=2.0
         - A_h = T_h / K_h (T_h: その病院の月間 Night 総重み、K_h: Nightに入れる候補者数)
         - 各 worker の c_{h,w}(重み付き回数)に対して:
             over >= c_{h,w} - ceil(A_h)
             under >= floor(A_h) - c_{h,w}
-        を置き、over/under を目的で罰する(weight_over/underでそれぞれ重み付け)
+        を置き、平均から超える(over)か下回る(under)でそれぞれペナルティを追加
 
     requires: {"hospitals"}  # days/workers は x から復元する
     """
