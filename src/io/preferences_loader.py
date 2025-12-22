@@ -96,14 +96,19 @@ def load_preferences_csv(path: str) -> dict[tuple[str, dt.date], PreferenceStatu
             for col_idx, d in date_cols:
                 val = (row[col_idx] if col_idx < len(row) else "").strip()
                 match (val, wants_night[worker]):
+                    # セルの値が空白かつ当直希望なし -> 制限なし
                     case ("", False) | (PreferenceStatus.NONE.value, False):
                         status = PreferenceStatus.NONE
+                    # セルの値が空白かつ当直希望あり -> 当直不可
                     case ("", True) | (PreferenceStatus.NONE.value, True):
                         status = PreferenceStatus.NIGHT_FORBIDDEN
+                    # セルの値が"当直不可" -> 当直不可
                     case (PreferenceStatus.NIGHT_FORBIDDEN.value, _):
                         status = PreferenceStatus.NIGHT_FORBIDDEN
+                    # セルの値が"日勤・当直不可" -> 日勤・当直不可
                     case (PreferenceStatus.DAY_NIGHT_FORBIDDEN.value, _):
                         status = PreferenceStatus.DAY_NIGHT_FORBIDDEN
+                    # その他の値
                     case (_, _):
                         # 未知の文言は安全側で無視(=制限なし)
                         # "当直希望"もここに含まれる
