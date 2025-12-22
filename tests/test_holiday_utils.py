@@ -153,6 +153,21 @@ def test_is_public_holiday_on_weekday_and_not_on_weekend():
     assert is_public_holiday(sun) is False
 
 
+def test_is_not_public_holiday():
+    """
+    節分の日(2026-02-03)や春分の日(2025-03-20)など、
+    カレンダー上で表示されるが、休みではない日が祝日でないことを確認
+    """
+    non_holidays = [
+        dt.date(2026, 2, 3),  # 節分の日
+        dt.date(2026, 3, 3),  # ひな祭り
+        dt.date(2026, 7, 7),  # 七夕
+        dt.date(2026, 12, 25),  # クリスマス
+    ]
+    for d in non_holidays:
+        assert is_public_holiday(d) is False
+
+
 def test_is_last_holiday_on_consecutive_block():
     """
     2日以上連続する『土日祝』ブロックの最終日で True になる。
