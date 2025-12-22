@@ -54,10 +54,10 @@ def is_last_holiday(d: dt.date) -> bool:
 def _is_year_end_new_year(d: dt.date) -> bool:
     """
     年末年始の祝日かどうかを判定する。
-    - 12月28日から31日までの4日間
+    - 12月29日から31日までの3日間
     - 1月1日から3日までの3日間
     """
-    year_end_start = dt.date(d.year, 12, 28)
+    year_end_start = dt.date(d.year, 12, 29)
     year_end_end = dt.date(d.year, 12, 31)
     new_year_start = dt.date(d.year, 1, 1)
     new_year_end = dt.date(d.year, 1, 3)

@@ -153,6 +153,21 @@ def test_is_public_holiday_on_weekday_and_not_on_weekend():
     assert is_public_holiday(sun) is False
 
 
+def test_is_not_public_holiday():
+    """
+    節分の日(2026-02-03)や春分の日(2025-03-20)など、
+    カレンダー上で表示されるが、休みではない日が祝日でないことを確認
+    """
+    non_holidays = [
+        dt.date(2026, 2, 3),  # 節分の日
+        dt.date(2026, 3, 3),  # ひな祭り
+        dt.date(2026, 7, 7),  # 七夕
+        dt.date(2026, 12, 25),  # クリスマス
+    ]
+    for d in non_holidays:
+        assert is_public_holiday(d) is False
+
+
 def test_is_last_holiday_on_consecutive_block():
     """
     2日以上連続する『土日祝』ブロックの最終日で True になる。
@@ -184,16 +199,32 @@ def test_is_last_holiday_singleton_is_false():
 
 def test_is_year_end_holiday():
     """
-    年末の12月28日~31日が祝日であることを確認。
+    年末の12月29日~31日が祝日であることを確認。
     元々土日である場合は祝日ではない判定になることも確認。
     """
+    year = 2023  # 例として2023年を使用
+    dec_28 = dt.date(year, 12, 28)  # 木曜
+    dec_29 = dt.date(year, 12, 29)  # 金曜、ここから祝日
+    dec_30 = dt.date(year, 12, 30)  # 土曜
+    dec_31 = dt.date(year, 12, 31)  # 日曜
+
+    assert is_holiday_or_weekend(dec_28) is False  # 平日
+    assert is_public_holiday(dec_28) is False  # 平日
+    assert is_holiday_or_weekend(dec_29) is True  # 休みかつ祝日
+    assert is_public_holiday(dec_29) is True
+    assert is_holiday_or_weekend(dec_30) is True  # 土曜なので休みだが、祝日ではない
+    assert is_public_holiday(dec_30) is False
+    assert is_holiday_or_weekend(dec_31) is True  # 日曜なので休みだが、祝日ではない
+    assert is_public_holiday(dec_31) is False
+
     year = 2025  # 例として2025年を使用
     dec_28 = dt.date(year, 12, 28)
     dec_29 = dt.date(year, 12, 29)
     dec_30 = dt.date(year, 12, 30)
     dec_31 = dt.date(year, 12, 31)
-    assert is_holiday_or_weekend(dec_28) is True
-    assert is_public_holiday(dec_28) is False  # 12/28は日曜日なので祝日ではない判定
+
+    assert is_holiday_or_weekend(dec_28) is True  # 日曜なので休み
+    assert is_public_holiday(dec_28) is False  # 祝日ではない
     assert is_holiday_or_weekend(dec_29) is True
     assert is_public_holiday(dec_29) is True
     assert is_holiday_or_weekend(dec_30) is True
@@ -203,6 +234,21 @@ def test_is_year_end_holiday():
     # 年末の12月26日は祝日ではないことを確認
     dec_26 = dt.date(year, 12, 26)
     assert is_holiday_or_weekend(dec_26) is False
+
+    year = 2026  # 例として2026年を使用
+    dec_28 = dt.date(year, 12, 28)  # 月曜
+    dec_29 = dt.date(year, 12, 29)  # 火曜、ここから祝日
+    dec_30 = dt.date(year, 12, 30)  # 水曜
+    dec_31 = dt.date(year, 12, 31)  # 木曜
+
+    assert is_holiday_or_weekend(dec_28) is False  # 平日
+    assert is_public_holiday(dec_28) is False  # 平日
+    assert is_holiday_or_weekend(dec_29) is True  # 休みかつ祝日
+    assert is_public_holiday(dec_29) is True
+    assert is_holiday_or_weekend(dec_30) is True  # 休みかつ祝日
+    assert is_public_holiday(dec_30) is True
+    assert is_holiday_or_weekend(dec_31) is True  # 休みかつ祝日
+    assert is_public_holiday(dec_31) is True
 
 
 def test_is_new_year_holiday():
@@ -224,3 +270,14 @@ def test_is_new_year_holiday():
     # 年始の1月5日は祝日ではないことを確認
     jan_5 = dt.date(year, 1, 5)
     assert is_holiday_or_weekend(jan_5) is False
+
+    year = 2027  # 例として2027年を使用
+    jan_1 = dt.date(year, 1, 1)  # 金曜
+    jan_2 = dt.date(year, 1, 2)  # 土曜
+    jan_3 = dt.date(year, 1, 3)  # 日曜
+    assert is_holiday_or_weekend(jan_1) is True
+    assert is_public_holiday(jan_1) is True
+    assert is_holiday_or_weekend(jan_2) is True
+    assert is_public_holiday(jan_2) is False  # 1月2日は土曜日なので祝日ではない判定
+    assert is_holiday_or_weekend(jan_3) is True
+    assert is_public_holiday(jan_3) is False  # 1月3日は日曜日なので祝日ではない判定
