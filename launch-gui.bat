@@ -4,6 +4,58 @@ setlocal EnableExtensions EnableDelayedExpansion
 REM ---- move to project root (this .bat location) ----
 cd /d "%~dp0"
 
+REM =========================
+REM Git: install if missing, then pull (ff-only)
+REM =========================
+where git >nul 2>nul
+if errorlevel 1 (
+    echo [info] git not found. trying to install Git for Windows...
+
+    where winget >nul 2>nul
+    if errorlevel 1 (
+        echo [warn] winget not found. skip git install.
+        goto :git_done
+    )
+
+    REM Git for Windows (official winget id)
+    winget install -e --id Git.Git --silent --accept-package-agreements --accept-source-agreements
+)
+
+REM ---- add common Git install dirs to PATH for this session ----
+REM (Git for Windows installs here on many setups)
+set "PATH=%ProgramFiles%\Git\cmd;%ProgramFiles%\Git\bin;%ProgramFiles(x86)%\Git\cmd;%ProgramFiles(x86)%\Git\bin;%PATH%"
+
+REM ---- check again ----
+where git >nul 2>nul
+if errorlevel 1 (
+    echo [warn] git still not found. skip git pull.
+    goto :git_done
+)
+
+REM ---- pull only if we're inside a git repo and on a normal branch ----
+git rev-parse --is-inside-work-tree >nul 2>nul
+if errorlevel 1 (
+    echo [info] not a git repo. skip git pull.
+    goto :git_done
+)
+
+for /f "delims=" %%B in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "GIT_BRANCH=%%B"
+if /i "!GIT_BRANCH!"=="HEAD" (
+    echo [info] detached HEAD. skip git pull.
+    goto :git_done
+)
+
+git rev-parse --abbrev-ref --symbolic-full-name @{u} >nul 2>nul
+if errorlevel 1 (
+    echo [info] no upstream configured. skip git pull.
+    goto :git_done
+)
+
+echo [info] updating repository (ff-only)...
+git pull --ff-only || echo [warn] git pull failed (local changes/diverged/offline?)
+
+:git_done
+
 REM ---- check uv ----
 where uv >nul 2>nul
 if errorlevel 1 (
