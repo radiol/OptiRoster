@@ -9,6 +9,10 @@ if [[ "${1:-}" == "--ci" ]] || [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
   CI_MODE=1
 fi
 
+if have git; then
+  git pull --ff-only || true
+fi
+
 if ! have uv; then
   echo "[info] uv not found. trying to install..."
 
