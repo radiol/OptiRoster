@@ -19,7 +19,7 @@ def _s06_penalty_value(ctx) -> float:
 
 def test_equal_distribution_no_penalty(ensure_constraint):
     """
-    2人候補・4日間で, 2回ずつ平等分配 → 最大差=0 ≤ 1なのでペナルティ 0
+    2人候補-4日間で, 2回ずつ平等分配 -> 最大差=0 ≤ 1なのでペナルティ 0
     """
     c = ensure_constraint("src.constraints.s06_night_count_max_diff", "soft_night_count_max_diff")
 
@@ -54,7 +54,7 @@ def test_equal_distribution_no_penalty(ensure_constraint):
 
 def test_one_difference_no_penalty(ensure_constraint):
     """
-    2人候補・5日間で, 3回と2回の分配 → 最大差=1なのでペナルティ 0
+    2人候補-5日間で, 3回と2回の分配 -> 最大差=1なのでペナルティ 0
     """
     c = ensure_constraint("src.constraints.s06_night_count_max_diff", "soft_night_count_max_diff")
 
@@ -89,7 +89,7 @@ def test_one_difference_no_penalty(ensure_constraint):
 
 def test_large_difference_incurs_penalty(ensure_constraint):
     """
-    2人候補・6日間で, 強制的に4回と2回に分配 → 最大差=2 > 1でペナルティ発生
+    2人候補-6日間で, 強制的に4回と2回に分配 -> 最大差=2 > 1でペナルティ発生
     """
     c = ensure_constraint("src.constraints.s06_night_count_max_diff", "soft_night_count_max_diff")
 
@@ -130,7 +130,7 @@ def test_large_difference_incurs_penalty(ensure_constraint):
 
 def test_three_workers_balanced(ensure_constraint):
     """
-    3人候補・6日間で, 均等分配 (各 2回) → 最大差=0でペナルティなし
+    3人候補-6日間で, 均等分配 (各 2回) -> 最大差=0でペナルティなし
     """
     c = ensure_constraint("src.constraints.s06_night_count_max_diff", "soft_night_count_max_diff")
 
@@ -165,7 +165,7 @@ def test_three_workers_balanced(ensure_constraint):
 
 def test_three_workers_unbalanced(ensure_constraint):
     """
-    3人候補・7日間で, 強制的に3-2-2に分配 → 最大差=1でペナルティなし
+    3人候補-7日間で, 強制的に3-2-2に分配 -> 最大差=1でペナルティなし
     """
     c = ensure_constraint("src.constraints.s06_night_count_max_diff", "soft_night_count_max_diff")
 
