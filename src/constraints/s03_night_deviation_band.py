@@ -29,7 +29,7 @@ class SoftNightDeviationBand(ConstraintBase):
     """
 
     name = "soft_night_deviation_band"
-    summary = "病院ごとの当直回数の偏りを避ける"
+    summary = "病院ごとの当直回数(重みつき)の偏りを避ける"
     requires: ClassVar[set[str]] = {"hospitals"}
 
     def __init__(
