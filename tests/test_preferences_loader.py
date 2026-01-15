@@ -33,8 +33,8 @@ def test_csv_with_duplicate_names(tmp_path):
         診断02,,当直不可,当直不可
         診断03,当直不可,当直不可,当直不可
         診断03,,,
-        診断01,日勤・当直不可,,
-        診断02,当直不可,,日勤・当直不可
+        診断01,外勤・当直不可,,
+        診断02,当直不可,,外勤・当直不可
     """)
     p = tmp_path / "prefs.csv"
     p.write_text(csv_text, encoding="utf-8")
