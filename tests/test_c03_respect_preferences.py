@@ -47,7 +47,7 @@ def test_forbid_night_and_all_shifts():
     d = dt.date(2025, 9, 1)
 
     # 田中: 当直不可 → NIGHT=0, DAYは可
-    # 佐藤: 日勤・当直不可 → 全シフト0
+    # 佐藤: 外勤・当直不可 → 全シフト0
     x = {
         (h, w1, d, ShiftType.DAY): pulp.LpVariable("x_tanaka_day", 0, 1, cat="Binary"),
         (h, w1, d, ShiftType.NIGHT): pulp.LpVariable("x_tanaka_night", 0, 1, cat="Binary"),

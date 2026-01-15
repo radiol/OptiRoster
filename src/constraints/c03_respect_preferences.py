@@ -14,7 +14,7 @@ class RespectPreferencesFromCSV(ConstraintBase):
     """
     勤務希望(可否)CSVをハード制約で反映する。
     - status=当直不可        → NIGHT を禁止
-    - status=日勤・当直不可   → 全シフト禁止
+    - status=外勤・当直不可   → 全シフト禁止
     - 空欄/その他             → 制限なし
     ctx に "preferences" として Dict[(worker: str, date: date), PreferenceStatus] を渡すこと。
     """
