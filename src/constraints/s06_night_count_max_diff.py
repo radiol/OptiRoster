@@ -17,21 +17,22 @@ from .penalty_utils import add_penalties
 class SoftNightCountMaxDiff(ConstraintBase):
     """
     病院ごとに, Night の"重み付けなし"回数で,
-    最小の人と最大の人の差が1以下になるよう誘導するソフト制約.
+    平均値ベースの負荷分散を行うソフト制約.
     各病院で:
-        - 候補者の中で最小回数をmin_count, 最大回数をmax_countとする
-        - max_count - min_count <= 1 となるようペナルティを追加
+        - 対象者(2回以上勤務できる人)の総Night勤務回数を計算
+        - 対象者数で割って平均を導出
+        - 平均値の前後の整数値以外の勤務回数を持つ対象者にペナルティを設定
 
     requires: {"hospitals"}  # days/workers は x から復元する
     """
 
     name = "soft_night_count_max_diff"
-    summary = "病院ごとの当直回数の最大・最小差を1以下に制限"
+    summary = "病院ごとの当直回数(重みなし)の偏りを避ける"
     requires: ClassVar[set[str]] = {"hospitals"}
 
     def __init__(
         self,
-        weight: float = 5.0,  # 差が1を超えた場合のペナルティ重み
+        weight: float = 5.0,  # 平均から外れた場合のペナルティ重み
         min_candidate_nights: int = 2,  # 候補日が極端に少ない人(候補日が2日未満)は対象外に
     ):
         self.weight = float(weight)
@@ -48,10 +49,13 @@ class SoftNightCountMaxDiff(ConstraintBase):
 
         # (h,w) -> [(d,var)]  (Night のみ)
         hw_vars: dict[tuple[str, str], list[tuple[date, pulp.LpVariable]]] = {}
+        # 病院ごとの Night 対象日(候補変数が存在する日)を集計
+        night_days_by_h: dict[str, set[date]] = {}
 
         for (h, w, d, s), var in x.items():
             if s == ShiftType.NIGHT:
                 hw_vars.setdefault((h, w), []).append((d, var))
+                night_days_by_h.setdefault(h, set()).add(d)
 
         penalty_items = []
 
@@ -62,33 +66,36 @@ class SoftNightCountMaxDiff(ConstraintBase):
                 for (hh, w) in hw_vars
                 if hh == h and len(hw_vars[(h, w)]) >= self.min_candidate_nights
             ]
-            if len(Wh) <= 1:
-                continue  # 候補者が1人以下なら対象外
+            Kh = len(Wh)
+            days_h = sorted(night_days_by_h.get(h, []))
+            if Kh <= 1 or not days_h:
+                continue
 
-            # 各人の重み付けなし回数
+            # 総勤務回数 T_h と平均 A_h
+            Th = len(days_h)  # 重み付けなしカウント
+            Ah = Th / Kh
+            Lh = int(Ah)  # floor
+            Uh = Lh + 1  # ceil
+
+            # 各人の勤務回数
             counts = {}
             for w in Wh:
-                terms = [var for (d, var) in hw_vars[(h, w)]]
+                terms = [var for (_, var) in hw_vars[(h, w)]]
                 counts[w] = pulp.lpSum(terms) if terms else pulp.lpSum([])
 
-            # 最小・最大回数を表す変数
-            min_count = pulp.LpVariable(f"night_min_{h}", lowBound=0)
-            max_count = pulp.LpVariable(f"night_max_{h}", lowBound=0)
-
-            # 制約: min_count <= counts[w] <= max_count for all w in Wh
+            # バンド外だけペナルティ
             for w in Wh:
-                model += min_count <= counts[w], f"night_min_bound_{h}_{w}"
-                model += counts[w] <= max_count, f"night_max_bound_{h}_{w}"
+                over = pulp.LpVariable(f"night_count_diff_over_{h}_{w}", lowBound=0)
+                under = pulp.LpVariable(f"night_count_diff_under_{h}_{w}", lowBound=0)
+                model += over >= counts[w] - Uh
+                model += under >= Lh - counts[w]
 
-            # 差が1を超える部分に対するペナルティ変数
-            excess_diff = pulp.LpVariable(f"night_excess_diff_{h}", lowBound=0)
-
-            # excess_diff >= (max_count - min_count) - 1
-            model += excess_diff >= max_count - min_count - 1, f"night_diff_penalty_{h}"
-
-            penalty_items.append(
-                (excess_diff, self.weight, {"hospital": h, "kind": "max_diff_excess"})
-            )
+                penalty_items.append(
+                    (over, self.weight, {"hospital": h, "worker": w, "kind": "over"})
+                )
+                penalty_items.append(
+                    (under, self.weight, {"hospital": h, "worker": w, "kind": "under"})
+                )
 
         add_penalties(ctx, self.name, penalty_items)
 
