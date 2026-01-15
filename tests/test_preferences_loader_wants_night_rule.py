@@ -45,14 +45,14 @@ def test_blank_becomes_night_forbidden_if_any_wants_night(tmp_path):
 
 def test_explicit_forbids_take_precedence(tmp_path):
     """
-    明示の『当直不可』『日勤・当直不可』は空欄ルールより優先される。
+    明示の『当直不可』『外勤・当直不可』は空欄ルールより優先される。
     """
     csv_path = _write(
         tmp_path,
         "prefs.csv",
         """
         氏名,2025年10月 勤務希望 [10/1(水)],2025年10月 勤務希望 [10/2(木)], 2025年10月 勤務希望 [10/3(金)]
-        診断01,当直希望,当直不可,日勤・当直不可
+        診断01,当直希望,当直不可,外勤・当直不可
         """,  # noqa: E501
     )
     res = load_preferences_csv(str(csv_path))

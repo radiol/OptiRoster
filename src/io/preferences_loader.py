@@ -12,7 +12,7 @@ from src.domain.types import ShiftType
 class PreferenceStatus(str, Enum):
     NONE = "制限なし"
     NIGHT_FORBIDDEN = "当直不可"
-    DAY_NIGHT_FORBIDDEN = "日勤・当直不可"
+    DAY_NIGHT_FORBIDDEN = "外勤・当直不可"
 
 
 _WANTS_NIGHT = "当直希望"
@@ -85,7 +85,7 @@ def load_preferences_csv(path: str) -> dict[tuple[str, dt.date], PreferenceStatu
                 if val == _WANTS_NIGHT:
                     wants_night[worker] = True
 
-        # 2パス目: セルごとに"制限なし" or "当直不可" or "日勤・当直不可"を確定
+        # 2パス目: セルごとに"制限なし" or "当直不可" or "外勤・当直不可"を確定
         for row in row_list:
             if not row or len(row) <= name_col:
                 continue
@@ -105,7 +105,7 @@ def load_preferences_csv(path: str) -> dict[tuple[str, dt.date], PreferenceStatu
                     # セルの値が"当直不可" -> 当直不可
                     case (PreferenceStatus.NIGHT_FORBIDDEN.value, _):
                         status = PreferenceStatus.NIGHT_FORBIDDEN
-                    # セルの値が"日勤・当直不可" -> 日勤・当直不可
+                    # セルの値が"外勤・当直不可" -> 外勤・当直不可
                     case (PreferenceStatus.DAY_NIGHT_FORBIDDEN.value, _):
                         status = PreferenceStatus.DAY_NIGHT_FORBIDDEN
                     # その他の値
@@ -113,6 +113,8 @@ def load_preferences_csv(path: str) -> dict[tuple[str, dt.date], PreferenceStatu
                         # 未知の文言は安全側で無視(=制限なし)
                         # "当直希望"もここに含まれる
                         status = PreferenceStatus.NONE
+                        if val != _WANTS_NIGHT:
+                            print(f"[Warning] 勤務希望に未定義の入力 '{val}', '{worker}', {d}.")
                 result[(worker, d)] = status
 
     return result
