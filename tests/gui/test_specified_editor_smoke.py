@@ -1,12 +1,16 @@
 """Smoke tests: SpecifiedDatesEditorWindow instantiation and open_path."""
 
+from datetime import date
 from pathlib import Path
 
 import pytest
 import tomlkit
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QCalendarWidget
 
-from src.gui.editors.specified_editor import SpecifiedDatesEditorWindow
+from src.gui.editors.specified_editor import (
+    SpecifiedDatesEditorWindow,
+    get_default_month,
+)
 
 MINIMAL_TOML = """\
 [[hospitals]]
@@ -63,3 +67,23 @@ class TestSpecifiedEditorSmoke:
         parsed = tomlkit.parse(out.read_text(encoding="utf-8"))
         assert "hospitals" in parsed
         assert str(parsed["hospitals"][0]["name"]) == "TestH"
+
+
+class TestCalendarSmoke:
+    def test_calendar_is_custom_subclass(self, editor):
+        # _MonthCalendar is a QCalendarWidget subclass with paintCell override
+        assert isinstance(editor._calendar, QCalendarWidget)
+        assert type(editor._calendar).__name__ == "_MonthCalendar"
+
+    def test_initial_page_is_next_month(self, editor):
+        y, m = get_default_month(date.today())
+        assert editor._calendar.yearShown() == y
+        assert editor._calendar.monthShown() == m
+
+    def test_open_path_resets_to_next_month(self, editor, tmp_path: Path):
+        f = tmp_path / "s.toml"
+        f.write_text(MINIMAL_TOML, encoding="utf-8")
+        editor.open_path(f)
+        y, m = get_default_month(date.today())
+        assert editor._calendar.yearShown() == y
+        assert editor._calendar.monthShown() == m
