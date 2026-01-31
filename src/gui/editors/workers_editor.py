@@ -230,8 +230,8 @@ class WorkersEditorWindow(QMainWindow):
 
         # --- Left panel: worker list + Add/Delete ---
         self._worker_list = QListWidget()
-        btn_add = QPushButton("Add")
-        btn_delete = QPushButton("Delete")
+        btn_add = QPushButton("メンバー追加")
+        btn_delete = QPushButton("メンバー削除")
         left_btns = QHBoxLayout()
         left_btns.addWidget(btn_add)
         left_btns.addWidget(btn_delete)
