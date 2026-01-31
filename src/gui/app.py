@@ -1,10 +1,7 @@
-import contextlib
-import json
 import traceback
 from pathlib import Path
 
 import pandas as pd
-import tomlkit
 from pandas.api.types import is_integer_dtype
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -14,7 +11,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QMessageBox,
-    QPlainTextEdit,
     QPushButton,
     QTableWidget,
     QTableWidgetItem,
@@ -23,14 +19,17 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-# {project_root}/src/gui/app.py から 2 つ上が project_root
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CONFIG_DIR = PROJECT_ROOT / "config"
-HOSPITALS_TOML_PATH = CONFIG_DIR / "hospitals.toml"
-WORKERS_TOML_PATH = CONFIG_DIR / "workers.toml"
-DATA_DIR = PROJECT_ROOT / "data"
-MAX_ASSIGNMENTS_PATH = DATA_DIR / "max-assignments.csv"
-SPECIFIED_DATES_PATH = DATA_DIR / "specified-dates.toml"
+from src.gui.common.paths import Paths
+
+# パス集約
+_paths = Paths.from_file(__file__)
+PROJECT_ROOT = _paths.project_root
+CONFIG_DIR = _paths.config_dir
+DATA_DIR = _paths.data_dir
+HOSPITALS_TOML_PATH = _paths.hospitals_toml
+WORKERS_TOML_PATH = _paths.workers_toml
+MAX_ASSIGNMENTS_PATH = _paths.max_assignments_csv
+SPECIFIED_DATES_PATH = _paths.specified_dates_toml
 
 
 # -------- ユーティリティ --------
@@ -115,11 +114,6 @@ def table_to_df(table: QTableWidget) -> pd.DataFrame:
         data.append(row)
     return pd.DataFrame(data, columns=headers)
 
-
-def backup(path: Path) -> None:
-    if path.exists():
-        bak = path.with_suffix(path.suffix + ".bak")
-        bak.write_text(path.read_text(encoding="utf-8-sig"), encoding="utf-8-sig")
 
 
 # -------- メイン処理タブ --------
@@ -426,198 +420,24 @@ class MainTab(QWidget):
             err(self, error_msg)
 
 
-# -------- 設定編集タブ --------
-def _err(parent: QWidget, msg: str) -> None:
-    QMessageBox.critical(parent, "エラー", msg)
-
-
-def _info(parent: QWidget, msg: str) -> None:
-    QMessageBox.information(parent, "情報", msg)
-
-
+# -------- 設定タブ（ランチャー） --------
 class SettingsTab(QWidget):
-    def __init__(self, parent: QWidget | None = None) -> None:
+    """各設定ファイル用 Editor Window を起動するランチャー."""
+
+    def __init__(self, main_window: "MainWindow", parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self._main_window = main_window
 
-        # 上部の操作ボタン列(横並び)
-        self.btn_open_max = QPushButton("勤務回数上限設定")  # ← 指定の名称
-        self.btn_open_dates = QPushButton("病院別勤務希望日設定")
-        self.btn_open = QPushButton("設定ファイルを選択(TOML/CSV/JSON)")
-        self.btn_save = QPushButton("上書き保存(.bak作成)")
+        self.btn_hospitals = QPushButton("病院設定 (hospitals.toml) を編集")
+        self.btn_specified = QPushButton("病院別勤務希望日 (specified-dates.toml) を編集")
 
-        top = QHBoxLayout()
-        top.addWidget(self.btn_open_max)
-        top.addWidget(self.btn_open_dates)
-        top.addStretch(1)
-        top.addWidget(self.btn_open)
-        top.addWidget(self.btn_save)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.btn_hospitals)
+        layout.addWidget(self.btn_specified)
+        layout.addStretch()
 
-        # 編集領域(CSV は table、TOML/JSON は editor)
-        self.table = QTableWidget()
-        self.editor = QPlainTextEdit()
-        self.table.hide()
-        self.editor.hide()
-
-        # テーブル編集機能の設定
-        self.setup_table_editing()
-
-        right = QVBoxLayout()
-        right.addLayout(top)
-        right.addWidget(QLabel("編集領域:"))
-        right.addWidget(self.table)
-        right.addWidget(self.editor)
-
-        root = QVBoxLayout(self)
-        root.addLayout(right)
-
-        # 状態
-        self.path: Path | None = None
-
-        # シグナル
-        self.btn_open.clicked.connect(self.open_config_dialog)
-        self.btn_save.clicked.connect(self.save_config)
-        self.btn_open_max.clicked.connect(lambda: self.load_config_from_path(MAX_ASSIGNMENTS_PATH))
-        self.btn_open_dates.clicked.connect(
-            lambda: self.load_config_from_path(SPECIFIED_DATES_PATH)
-        )
-
-    def setup_table_editing(self) -> None:
-        """テーブル編集機能をセットアップ"""
-        from PySide6.QtCore import QEvent
-        from PySide6.QtGui import QKeyEvent
-
-        def handle_key_press(event: QKeyEvent) -> bool:
-            """キーボードイベントを処理"""
-            # Delete または Backspace キーでセルを空にする
-            if event.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace):
-                current_item = self.table.currentItem()
-                if current_item is not None:
-                    current_item.setText("")
-                    return True
-            return False
-
-        # イベントフィルターを設定
-        from PySide6.QtCore import QObject
-
-        class EventFilter(QObject):
-            def __init__(self, table_widget: QTableWidget) -> None:
-                super().__init__()
-                self.table_widget = table_widget
-
-            def eventFilter(self, obj: QObject, event: QEvent) -> bool:
-                if event.type() == QEvent.Type.KeyPress and obj == self.table_widget:
-                    from typing import cast
-
-                    from PySide6.QtGui import QKeyEvent
-
-                    return handle_key_press(cast(QKeyEvent, event))
-                return False
-
-        self.event_filter = EventFilter(self.table)
-        self.table.installEventFilter(self.event_filter)
-
-    # 汎用オープンダイアログ
-    def open_config_dialog(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(
-            self, "設定ファイルを選択", "", "TOML (*.toml *.tml);;CSV (*.csv);;JSON (*.json)"
-        )
-        if not path:
-            return
-        self.load_config_from_path(Path(path))
-
-    # 指定パスを開く(無ければ最小テンプレを用意)
-    def load_config_from_path(self, path: Path) -> None:
-        try:
-            if not path.exists():
-                DATA_DIR.mkdir(parents=True, exist_ok=True)
-                if path.suffix.lower() == ".csv":
-                    tmpl = "Name,HospitalA,HospitalB\n診断01,1,0\n"
-                elif path.suffix.lower() in {".toml", ".tml"}:
-                    tmpl = (
-                        "# 病院別勤務希望日(指定日)サンプル\n"
-                        "# [HospitalA]\n"
-                        '# dates = ["2025-10-03", "2025-10-17"]\n'
-                        "\n"
-                    )
-                else:
-                    tmpl = "{}\n"
-                ret = QMessageBox.question(
-                    self,
-                    "ファイルがありません",
-                    f"{path.name} を新規作成しますか?",  # パスは出さない
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                    QMessageBox.StandardButton.Yes,
-                )
-                if ret == QMessageBox.StandardButton.Yes:
-                    path.write_text(tmpl, encoding="utf-8")
-                else:
-                    return
-
-            self.path = path
-
-            ext = path.suffix.lower()
-            if ext == ".csv":
-                df = pd.read_csv(path)
-                # 整数表示・保存のための型揃え(存在すれば)
-                with contextlib.suppress(NameError):
-                    df = coerce_int_columns(df)
-                df_to_table(self.table, df)
-                # Name を行ヘッダに(存在すれば)
-                # Note: apply_name_as_row_header function is not implemented
-                # try:
-                #     apply_name_as_row_header(self.table, df, hide=True, name_col="Name")
-                # except NameError:
-                #     pass
-                self.table.show()
-                self.editor.hide()
-
-            elif ext in {".toml", ".tml"}:
-                txt = path.read_text(encoding="utf-8")
-                tomlkit.parse(txt)  # 構文検証
-                self.editor.setPlainText(txt)
-                self.editor.show()
-                self.table.hide()
-
-            else:  # JSON
-                txt = path.read_text(encoding="utf-8")
-                json.loads(txt)  # 構文検証
-                self.editor.setPlainText(txt)
-                self.editor.show()
-                self.table.hide()
-
-        except Exception as e:
-            _err(self, f"読み込みに失敗しました:\n{e}\n\n{traceback.format_exc()}")
-
-    def save_config(self) -> None:
-        if not self.path:
-            _err(self, "保存する設定ファイルを先に選んでください。")
-            return
-        try:
-            # .bak 退避
-            if self.path.exists():
-                bak = self.path.with_suffix(self.path.suffix + ".bak")
-                bak.write_text(self.path.read_text(encoding="utf-8"), encoding="utf-8")
-
-            ext = self.path.suffix.lower()
-            if ext == ".csv":
-                df = table_to_df(self.table)
-                with contextlib.suppress(NameError):
-                    df = coerce_int_columns(df)
-                df.to_csv(self.path, index=False)
-
-            elif ext in {".toml", ".tml"}:
-                txt = self.editor.toPlainText()
-                tomlkit.parse(txt)  # 構文検証
-                self.path.write_text(txt, encoding="utf-8")
-
-            else:  # JSON
-                txt = self.editor.toPlainText()
-                json.loads(txt)  # 構文検証
-                self.path.write_text(txt, encoding="utf-8")
-
-            _info(self, "保存しました。(.bak を作成)")
-        except Exception as e:
-            _err(self, f"保存に失敗しました:\n{e}\n\n{traceback.format_exc()}")
+        self.btn_hospitals.clicked.connect(self._main_window.open_hospitals_editor)
+        self.btn_specified.clicked.connect(self._main_window.open_specified_editor)
 
 
 # -------- メインウィンドウ --------
@@ -625,11 +445,46 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Duty Generator")
+        self._editors: dict[str, QMainWindow] = {}
+
         tabs = QTabWidget()
         tabs.addTab(MainTab(self), "メイン")
-        tabs.addTab(SettingsTab(self), "設定")
+        tabs.addTab(SettingsTab(self, self), "設定")
         self.setCentralWidget(tabs)
         self.resize(1000, 700)
+
+    # --- Editor 起動ヘルパー ---
+    def _open_editor(self, key: str, factory: type) -> None:
+        """key に対応するエディタが未起動なら生成、起動済みなら前面へ."""
+        editor = self._editors.get(key)
+        if editor is not None:
+            editor.show()
+            editor.raise_()
+            editor.activateWindow()
+            return
+        editor = factory(parent=None)
+        self._editors[key] = editor
+        editor.show()
+
+    def open_hospitals_editor(self) -> None:
+        from src.gui.editors.hospitals_editor import get_editor_class
+
+        HospitalsEditorWindow = get_editor_class()
+        self._open_editor("hospitals", HospitalsEditorWindow)
+        editor = self._editors["hospitals"]
+        if hasattr(editor, "current_path") and editor.current_path is None:
+            if HOSPITALS_TOML_PATH.exists():
+                editor.open_path(HOSPITALS_TOML_PATH)
+
+    def open_specified_editor(self) -> None:
+        from src.gui.editors.specified_editor import get_editor_class
+
+        SpecifiedDatesEditorWindow = get_editor_class()
+        self._open_editor("specified", SpecifiedDatesEditorWindow)
+        editor = self._editors["specified"]
+        if hasattr(editor, "current_path") and editor.current_path is None:
+            if SPECIFIED_DATES_PATH.exists():
+                editor.open_path(SPECIFIED_DATES_PATH)
 
 
 def main() -> None:
