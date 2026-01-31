@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import traceback
 from pathlib import Path
 
 import pandas as pd
@@ -289,9 +288,7 @@ class MainTab(QWidget):
 
             if res.penalty_by_source:
                 self.log_append("ペナルティ詳細:", color="#FF8C00")
-                for source, penalty in sorted(
-                    res.penalty_by_source.items(), key=lambda kv: -kv[1]
-                ):
+                for source, penalty in sorted(res.penalty_by_source.items(), key=lambda kv: -kv[1]):
                     if penalty > 0:
                         self.log_append(f"  {source}: {penalty}", color="#FF8C00")
 
@@ -400,7 +397,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Duty Generator")
 
         self._registry = WindowRegistry()
-        self._editors = self._registry._windows  # 後方互換（テスト用）
+        self._editors = self._registry._windows  # 後方互換(テスト用)
 
         tabs = QTabWidget()
         tabs.addTab(MainTab(self), "メイン")

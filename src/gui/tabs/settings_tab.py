@@ -61,7 +61,7 @@ class SettingsTab(QWidget):
 
         desc = QLabel(description)
         desc.setWordWrap(True)
-        desc.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        desc.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         v.addWidget(desc)
 
         for b in buttons:

@@ -9,9 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
+from typing import cast
 
 import tomlkit
-from PySide6.QtCore import QDate, Qt
+from PySide6.QtCore import QDate, QRect, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import (
     QCalendarWidget,
@@ -66,7 +67,7 @@ def _ensure_hospitals(doc: tomlkit.TOMLDocument) -> tomlkit.items.AoT:
     """doc 内に hospitals AoT がなければ作り、返す."""
     if "hospitals" not in doc:
         doc["hospitals"] = aot()
-    return doc["hospitals"]
+    return cast(tomlkit.items.AoT, doc["hospitals"])
 
 
 def _entry_tbl_to_model(h: tomlkit.items.Table) -> HospitalEntry:
@@ -151,7 +152,7 @@ class _MonthCalendar(QCalendarWidget):
         """Programmatically switch the displayed page."""
         self.setCurrentPage(year, month)
 
-    def paintCell(self, painter: QPainter, rect, qdate: QDate) -> None:
+    def paintCell(self, painter: QPainter, rect: QRect, qdate: QDate) -> None:
         """Custom cell rendering: blank other-month, yellow highlight."""
         painter.save()
         y = self.yearShown()

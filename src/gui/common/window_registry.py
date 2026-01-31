@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TypeVar, cast
 
 from PySide6.QtWidgets import QMainWindow
+
+_W = TypeVar("_W", bound=QMainWindow)
 
 
 class WindowRegistry:
@@ -13,14 +16,14 @@ class WindowRegistry:
     def __init__(self) -> None:
         self._windows: dict[str, QMainWindow] = {}
 
-    def get_or_create(self, key: str, factory: Callable[[], QMainWindow]) -> QMainWindow:
+    def get_or_create(self, key: str, factory: Callable[[], _W]) -> _W:
         """key に対応するウィンドウを返す。未生成なら factory で生成して show()."""
         window = self._windows.get(key)
         if window is not None:
             window.show()
             window.raise_()
             window.activateWindow()
-            return window
+            return cast(_W, window)
         window = factory()
         self._windows[key] = window
         window.show()

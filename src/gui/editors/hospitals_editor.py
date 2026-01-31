@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import cast
 
 import tomlkit
 from PySide6.QtWidgets import (
@@ -66,14 +67,14 @@ def _ensure_hospitals(doc: tomlkit.TOMLDocument) -> tomlkit.items.AoT:
     """doc 内に hospitals AoT がなければ作り、返す."""
     if "hospitals" not in doc:
         doc["hospitals"] = aot()
-    return doc["hospitals"]
+    return cast(tomlkit.items.AoT, doc["hospitals"])
 
 
 def _ensure_shifts(hosp_tbl: tomlkit.items.Table) -> tomlkit.items.AoT:
     """hospital table 内に shifts AoT がなければ作り、返す."""
     if "shifts" not in hosp_tbl:
         hosp_tbl["shifts"] = aot()
-    return hosp_tbl["shifts"]
+    return cast(tomlkit.items.AoT, hosp_tbl["shifts"])
 
 
 def _hosp_tbl_to_model(h: tomlkit.items.Table) -> HospitalModel:
@@ -86,7 +87,7 @@ def _hosp_tbl_to_model(h: tomlkit.items.Table) -> HospitalModel:
                 weekdays=[str(x) for x in (s.get("weekdays", []) or [])],
                 frequency=str(s.get("frequency", "")),
             )
-            for s in h["shifts"]
+            for s in cast(tomlkit.items.AoT, h["shifts"])
         ]
     return HospitalModel(
         name=str(h.get("name", "")),
@@ -320,9 +321,10 @@ class HospitalDialog(QDialog):
         dlg = ShiftDialog(self, current)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             m = dlg.get_model()
-            self.shift_table.item(row, 0).setText(m.shift_type)
-            self.shift_table.item(row, 1).setText(",".join(m.weekdays))
-            self.shift_table.item(row, 2).setText(m.frequency)
+            for col, val in enumerate([m.shift_type, ",".join(m.weekdays), m.frequency]):
+                item = self.shift_table.item(row, col)
+                if item is not None:
+                    item.setText(val)
 
     def _del_shift(self) -> None:
         row = self._selected_row()

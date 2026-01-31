@@ -6,6 +6,7 @@ GUI クラス (WorkersEditorWindow) は PySide6 が必要。
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from typing import Any
 
@@ -41,15 +42,14 @@ def load_workers_toml(path: Path) -> WorkerModel:
     doc = tomlkit.parse(text)
     result: WorkerModel = []
     for w in doc.get("workers", []):
-        assignments: list[dict[str, Any]] = []
-        for a in w.get("assignments", []):
-            assignments.append(
-                {
-                    "hospital": str(a["hospital"]),
-                    "weekdays": [str(d) for d in a.get("weekdays", [])],
-                    "shift_type": str(a["shift_type"]),
-                }
-            )
+        assignments: list[dict[str, Any]] = [
+            {
+                "hospital": str(a["hospital"]),
+                "weekdays": [str(d) for d in a.get("weekdays", [])],
+                "shift_type": str(a["shift_type"]),
+            }
+            for a in w.get("assignments", [])
+        ]
         result.append(
             {
                 "name": str(w["name"]),
@@ -113,23 +113,21 @@ def _parse_assignments(text: str) -> list[dict[str, Any]]:
     if not text.strip():
         return []
     doc = tomlkit.parse(text)
-    result: list[dict[str, Any]] = []
-    for a in doc.get("assignments", []):
-        result.append(
-            {
-                "hospital": str(a["hospital"]),
-                "weekdays": [str(d) for d in a.get("weekdays", [])],
-                "shift_type": str(a["shift_type"]),
-            }
-        )
-    return result
+    return [
+        {
+            "hospital": str(a["hospital"]),
+            "weekdays": [str(d) for d in a.get("weekdays", [])],
+            "shift_type": str(a["shift_type"]),
+        }
+        for a in doc.get("assignments", [])
+    ]
 
 
 # ---------------------------------------------------------------------------
 # GUI
 # ---------------------------------------------------------------------------
 class WorkersEditorWindow(QMainWindow):
-    """workers.toml 専用エディタウィンドウ（一覧＋詳細）."""
+    """workers.toml 専用エディタウィンドウ(一覧+詳細)."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -229,10 +227,8 @@ class WorkersEditorWindow(QMainWindow):
         w = self._model[self._current_index]
         w["name"] = self._name_edit.text()
         w["is_diagnostic_specialist"] = self._specialist_check.isChecked()
-        try:
+        with contextlib.suppress(Exception):  # パース失敗時は既存 assignments を維持
             w["assignments"] = _parse_assignments(self._assignments_text.toPlainText())
-        except Exception:
-            pass  # パース失敗時は既存 assignments を維持
         item = self._worker_list.item(self._current_index)
         if item:
             item.setText(w["name"])

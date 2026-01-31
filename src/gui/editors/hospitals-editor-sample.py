@@ -1,9 +1,7 @@
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -19,7 +17,6 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QMainWindow,
-    QMenu,
     QMessageBox,
     QPushButton,
     QTableWidget,
@@ -27,9 +24,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
-from tomlkit import document, parse, table, aot
-
+from tomlkit import aot, document, parse, table
 
 SHIFT_TYPES = ["AM", "PM", "日勤", "当直"]
 FREQUENCIES = ["毎週", "隔週", "指定日"]
@@ -39,7 +34,7 @@ WEEKDAYS = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"
 @dataclass
 class ShiftModel:
     shift_type: str
-    weekdays: List[str]
+    weekdays: list[str]
     frequency: str
 
 
@@ -48,7 +43,7 @@ class HospitalModel:
     name: str
     is_remote: bool
     is_university: bool
-    shifts: List[ShiftModel]
+    shifts: list[ShiftModel]
 
 
 def _ensure_hospitals(doc):
@@ -66,14 +61,14 @@ def _ensure_shifts(hosp_tbl):
 def _hosp_tbl_to_model(h) -> HospitalModel:
     shifts = []
     if "shifts" in h and h["shifts"] is not None:
-        for s in h["shifts"]:
-            shifts.append(
-                ShiftModel(
-                    shift_type=str(s.get("shift_type", "")),
-                    weekdays=[str(x) for x in (s.get("weekdays", []) or [])],
-                    frequency=str(s.get("frequency", "")),
-                )
+        shifts.extend(
+            ShiftModel(
+                shift_type=str(s.get("shift_type", "")),
+                weekdays=[str(x) for x in (s.get("weekdays", []) or [])],
+                frequency=str(s.get("frequency", "")),
             )
+            for s in h["shifts"]
+        )
     return HospitalModel(
         name=str(h.get("name", "")),
         is_remote=bool(h.get("is_remote", False)),
@@ -100,7 +95,7 @@ def _apply_model_to_hosp_tbl(hosp_tbl, model: HospitalModel):
 
 
 class ShiftDialog(QDialog):
-    def __init__(self, parent=None, initial: Optional[ShiftModel] = None):
+    def __init__(self, parent=None, initial: ShiftModel | None = None):
         super().__init__(parent)
         self.setWindowTitle("シフト編集")
 
@@ -165,7 +160,7 @@ class ShiftDialog(QDialog):
 
 
 class HospitalDialog(QDialog):
-    def __init__(self, parent=None, initial: Optional[HospitalModel] = None):
+    def __init__(self, parent=None, initial: HospitalModel | None = None):
         super().__init__(parent)
         self.setWindowTitle("病院編集")
 
@@ -174,9 +169,7 @@ class HospitalDialog(QDialog):
         self.chk_univ = QCheckBox("大学病院か?")
 
         self.shift_table = QTableWidget(0, 3)
-        self.shift_table.setHorizontalHeaderLabels(
-            ["shift_type", "weekdays", "frequency"]
-        )
+        self.shift_table.setHorizontalHeaderLabels(["shift_type", "weekdays", "frequency"])
         self.shift_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.shift_table.setSelectionMode(QTableWidget.SingleSelection)
         self.shift_table.horizontalHeader().setStretchLastSection(True)
@@ -233,25 +226,13 @@ class HospitalDialog(QDialog):
         self.shift_table.setItem(r, 2, QTableWidgetItem(s.frequency))
 
     def _row_to_shift(self, row: int) -> ShiftModel:
-        stype = (
-            self.shift_table.item(row, 0).text()
-            if self.shift_table.item(row, 0)
-            else ""
-        )
-        wds = (
-            self.shift_table.item(row, 1).text()
-            if self.shift_table.item(row, 1)
-            else ""
-        )
-        freq = (
-            self.shift_table.item(row, 2).text()
-            if self.shift_table.item(row, 2)
-            else ""
-        )
+        stype = self.shift_table.item(row, 0).text() if self.shift_table.item(row, 0) else ""
+        wds = self.shift_table.item(row, 1).text() if self.shift_table.item(row, 1) else ""
+        freq = self.shift_table.item(row, 2).text() if self.shift_table.item(row, 2) else ""
         weekdays = [x for x in wds.split(",") if x]
         return ShiftModel(shift_type=stype, weekdays=weekdays, frequency=freq)
 
-    def _selected_row(self) -> Optional[int]:
+    def _selected_row(self) -> int | None:
         items = self.shift_table.selectedItems()
         if not items:
             return None
@@ -300,9 +281,7 @@ class HospitalDialog(QDialog):
         self.accept()
 
     def get_model(self) -> HospitalModel:
-        shifts = []
-        for r in range(self.shift_table.rowCount()):
-            shifts.append(self._row_to_shift(r))
+        shifts = [self._row_to_shift(r) for r in range(self.shift_table.rowCount())]
         return HospitalModel(
             name=self.edit_name.text().strip(),
             is_remote=self.chk_remote.isChecked(),
@@ -317,7 +296,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("TOML Hospitals Editor")
 
         self.doc = document()
-        self.current_path: Optional[Path] = None
+        self.current_path: Path | None = None
 
         self.list_hosp = QListWidget()
         self.list_hosp.currentRowChanged.connect(self._on_select_hospital)
@@ -327,9 +306,7 @@ class MainWindow(QMainWindow):
         self.lbl_flags = QLabel("-")
 
         self.shift_table = QTableWidget(0, 3)
-        self.shift_table.setHorizontalHeaderLabels(
-            ["shift_type", "weekdays", "frequency"]
-        )
+        self.shift_table.setHorizontalHeaderLabels(["shift_type", "weekdays", "frequency"])
         self.shift_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.shift_table.setSelectionMode(QTableWidget.SingleSelection)
         self.shift_table.horizontalHeader().setStretchLastSection(True)
@@ -449,9 +426,7 @@ class MainWindow(QMainWindow):
         m = _hosp_tbl_to_model(h)
 
         self.lbl_name.setText(f"name: {m.name}")
-        self.lbl_flags.setText(
-            f"is_remote: {m.is_remote}   is_university: {m.is_university}"
-        )
+        self.lbl_flags.setText(f"is_remote: {m.is_remote}   is_university: {m.is_university}")
 
         for s in m.shifts:
             r = self.shift_table.rowCount()
@@ -499,10 +474,7 @@ class MainWindow(QMainWindow):
             return
 
         name = str(self._hospitals()[row].get("name", ""))
-        ok = (
-            QMessageBox.question(self, "Confirm", f"削除しますか?\n{name}")
-            == QMessageBox.Yes
-        )
+        ok = QMessageBox.question(self, "Confirm", f"削除しますか?\n{name}") == QMessageBox.Yes
         if not ok:
             return
 
@@ -538,9 +510,7 @@ class MainWindow(QMainWindow):
         self._swap_hospitals(row, row + 1)
 
     def _open_file(self):
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Open TOML", "", "TOML (*.toml);;All (*.*)"
-        )
+        path, _ = QFileDialog.getOpenFileName(self, "Open TOML", "", "TOML (*.toml);;All (*.*)")
         if not path:
             return
 
@@ -565,9 +535,7 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Error", f"保存に失敗しました:\n{e}")
 
     def _save_file_as(self):
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Save TOML As", "", "TOML (*.toml);;All (*.*)"
-        )
+        path, _ = QFileDialog.getSaveFileName(self, "Save TOML As", "", "TOML (*.toml);;All (*.*)")
         if not path:
             return
         self.current_path = Path(path)

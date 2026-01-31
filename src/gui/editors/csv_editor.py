@@ -1,7 +1,7 @@
 """CSV editor — QTableWidget ベースの編集ウィンドウ.
 
 max-assignments.csv 等を表形式で編集し、Open / Save / Save As を提供する。
-.bak は作らない（Save As で代替）。
+.bak は作らない(Save As で代替)。
 """
 
 from __future__ import annotations

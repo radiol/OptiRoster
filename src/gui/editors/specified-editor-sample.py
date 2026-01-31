@@ -3,12 +3,13 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
-from PySide6.QtCore import Qt, QDate
-from PySide6.QtGui import QAction, QTextCharFormat, QColor
+import tomlkit
+from PySide6.QtCore import QDate
+from PySide6.QtGui import QAction, QColor, QTextCharFormat
 from PySide6.QtWidgets import (
     QApplication,
+    QCalendarWidget,
     QFileDialog,
     QHBoxLayout,
     QInputDialog,
@@ -21,10 +22,7 @@ from PySide6.QtWidgets import (
     QToolBar,
     QVBoxLayout,
     QWidget,
-    QCalendarWidget,
 )
-
-import tomlkit
 
 
 @dataclass
@@ -63,7 +61,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("specified-dates.toml editor")
 
-        self.current_path: Optional[Path] = None
+        self.current_path: Path | None = None
         self.entries: list[HospitalEntry] = []
         self.dirty = False
 
@@ -207,7 +205,7 @@ class MainWindow(QMainWindow):
             item = QListWidgetItem(e.name)
             self.list_widget.addItem(item)
 
-    def current_entry(self) -> Optional[HospitalEntry]:
+    def current_entry(self) -> HospitalEntry | None:
         row = self.list_widget.currentRow()
         if row < 0 or row >= len(self.entries):
             return None
@@ -285,7 +283,8 @@ class MainWindow(QMainWindow):
         y = self.calendar.yearShown()
         m = self.calendar.monthShown()
 
-        # Clear all date formats for current month range (1..31 safe; invalid QDate is ignored by widget)
+        # Clear all date formats for current month range
+        # (1..31 safe; invalid QDate is ignored by widget)
         clear_fmt = QTextCharFormat()
         for d in range(1, 32):
             qd = QDate(y, m, d)
