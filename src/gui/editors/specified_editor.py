@@ -7,11 +7,12 @@ GUI class (SpecifiedDatesEditorWindow) requires PySide6.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 
 import tomlkit
-from PySide6.QtCore import QDate
-from PySide6.QtGui import QColor, QTextCharFormat
+from PySide6.QtCore import QDate, Qt
+from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import (
     QCalendarWidget,
     QFileDialog,
@@ -36,6 +37,26 @@ from tomlkit import aot, document, parse, table
 class HospitalEntry:
     name: str
     dates: set[int] = field(default_factory=set)
+
+
+# ---------------------------------------------------------------------------
+# Pure logic helpers
+# ---------------------------------------------------------------------------
+def get_default_month(today: date) -> tuple[int, int]:
+    """Return (year, month) for the next month relative to *today*."""
+    if today.month == 12:
+        return (today.year + 1, 1)
+    return (today.year, today.month + 1)
+
+
+def is_in_displayed_month(
+    cell_year: int,
+    cell_month: int,
+    display_year: int,
+    display_month: int,
+) -> bool:
+    """Return True if the cell belongs to the displayed month."""
+    return cell_year == display_year and cell_month == display_month
 
 
 # ---------------------------------------------------------------------------
@@ -90,6 +111,77 @@ def dump_specified_dates(entries: list[HospitalEntry], path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Calendar widget (paintCell override, hides other-month dates)
+# ---------------------------------------------------------------------------
+_HIGHLIGHT_BG = QColor(255, 230, 160)
+_HIGHLIGHT_BORDER = QColor(200, 170, 80)
+_NORMAL_BG = QColor(255, 255, 255)
+_BLANK_BG = QColor(245, 245, 245)
+
+_CALENDAR_QSS = """\
+QCalendarWidget QAbstractItemView {
+    selection-background-color: transparent;
+    selection-color: black;
+}
+QCalendarWidget QAbstractItemView::item:hover {
+    background-color: transparent;
+    color: black;
+}
+QCalendarWidget QAbstractItemView::item:focus {
+    background-color: transparent;
+    color: black;
+}
+"""
+
+
+class _MonthCalendar(QCalendarWidget):
+    """QCalendarWidget subclass: hides other-month dates, custom highlight."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._highlight_days: set[int] = set()
+        self.setStyleSheet(_CALENDAR_QSS)
+
+    def set_highlight_dates(self, days: set[int]) -> None:
+        """Set highlighted day numbers and repaint."""
+        self._highlight_days = set(days)
+        self.updateCells()
+
+    def navigate_to(self, year: int, month: int) -> None:
+        """Programmatically switch the displayed page."""
+        self.setCurrentPage(year, month)
+
+    def paintCell(self, painter: QPainter, rect, qdate: QDate) -> None:
+        """Custom cell rendering: blank other-month, yellow highlight."""
+        painter.save()
+        y = self.yearShown()
+        m = self.monthShown()
+
+        if not is_in_displayed_month(qdate.year(), qdate.month(), y, m):
+            # Blank cell for other-month dates
+            painter.fillRect(rect, _BLANK_BG)
+        elif qdate.day() in self._highlight_days:
+            # Highlighted date -- yellow bg + border + bold
+            painter.fillRect(rect, _HIGHLIGHT_BG)
+            pen = QPen(_HIGHLIGHT_BORDER)
+            pen.setWidth(2)
+            painter.setPen(pen)
+            painter.drawRect(rect.adjusted(1, 1, -1, -1))
+            font = painter.font()
+            font.setBold(True)
+            painter.setFont(font)
+            painter.setPen(Qt.GlobalColor.black)
+            painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, str(qdate.day()))
+        else:
+            # Normal date in current month
+            painter.fillRect(rect, _NORMAL_BG)
+            painter.setPen(Qt.GlobalColor.black)
+            painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, str(qdate.day()))
+
+        painter.restore()
+
+
+# ---------------------------------------------------------------------------
 # GUI
 # ---------------------------------------------------------------------------
 class SpecifiedDatesEditorWindow(QMainWindow):
@@ -106,8 +198,8 @@ class SpecifiedDatesEditorWindow(QMainWindow):
         self.list_hosp = QListWidget()
         self.list_hosp.currentRowChanged.connect(self._on_select_hospital)
 
-        btn_add = QPushButton("病院追加")
-        btn_del = QPushButton("病院削除")
+        btn_add = QPushButton("\u75c5\u9662\u8ffd\u52a0")
+        btn_del = QPushButton("\u75c5\u9662\u524a\u9664")
         btn_add.clicked.connect(self._add_hospital)
         btn_del.clicked.connect(self._del_hospital)
 
@@ -115,11 +207,14 @@ class SpecifiedDatesEditorWindow(QMainWindow):
         crud_btns.addWidget(btn_add)
         crud_btns.addWidget(btn_del)
 
-        # -- right: calendar --
-        self._calendar = QCalendarWidget()
+        # -- right: calendar (default to next month) --
+        self._calendar = _MonthCalendar()
         self._calendar.setGridVisible(True)
         self._calendar.clicked.connect(self._on_date_clicked)
         self._calendar.currentPageChanged.connect(self._on_page_changed)
+
+        y, m = get_default_month(date.today())
+        self._calendar.navigate_to(y, m)
 
         self._status_label = QLabel("No file loaded")
 
@@ -141,12 +236,14 @@ class SpecifiedDatesEditorWindow(QMainWindow):
         left.addWidget(QLabel("File"))
         left.addLayout(file_btns)
         left.addSpacing(6)
-        left.addWidget(QLabel("病院リスト"))
+        left.addWidget(QLabel("\u75c5\u9662\u30ea\u30b9\u30c8"))
         left.addWidget(self.list_hosp)
         left.addLayout(crud_btns)
 
         right = QVBoxLayout()
-        right.addWidget(QLabel("勤務日を選択してください"))
+        right.addWidget(
+            QLabel("\u52e4\u52d9\u65e5\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044")
+        )
         right.addWidget(self._calendar)
         right.addWidget(self._status_label)
 
@@ -169,8 +266,12 @@ class SpecifiedDatesEditorWindow(QMainWindow):
             self.setWindowTitle(f"Specified Dates Editor \u2014 {path.name}")
             self._refresh_hospital_list()
             self._status_label.setText(str(path))
+            y, m = get_default_month(date.today())
+            self._calendar.navigate_to(y, m)
         except Exception as e:
-            QMessageBox.critical(self, "\u30a8\u30e9\u30fc", f"読み込みに失敗:\n{e}")
+            QMessageBox.critical(
+                self, "\u30a8\u30e9\u30fc", f"\u8aad\u307f\u8fbc\u307f\u306b\u5931\u6557:\n{e}"
+            )
 
     def save_to(self, path: Path) -> None:
         """Write entries to a TOML file."""
@@ -199,14 +300,18 @@ class SpecifiedDatesEditorWindow(QMainWindow):
 
     # -- CRUD --
     def _add_hospital(self) -> None:
-        name, ok = QInputDialog.getText(self, "病院追加", "病院名:")
+        name, ok = QInputDialog.getText(self, "\u75c5\u9662\u8ffd\u52a0", "\u75c5\u9662\u540d:")
         if not ok:
             return
         name = name.strip()
         if not name:
             return
         if any(e.name == name for e in self._entries):
-            QMessageBox.warning(self, "重複", "その病院名は既に存在します。")
+            QMessageBox.warning(
+                self,
+                "\u91cd\u8907",
+                "\u305d\u306e\u75c5\u9662\u540d\u306f\u65e2\u306b\u5b58\u5728\u3057\u307e\u3059\u3002",
+            )
             return
         self._entries.append(HospitalEntry(name=name))
         self._refresh_hospital_list()
@@ -219,8 +324,8 @@ class SpecifiedDatesEditorWindow(QMainWindow):
             return
         ret = QMessageBox.question(
             self,
-            "確認",
-            f"'{entry.name}' を削除しますか?",
+            "\u78ba\u8a8d",
+            f"'{entry.name}' \u3092\u524a\u9664\u3057\u307e\u3059\u304b?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
         if ret != QMessageBox.StandardButton.Yes:
@@ -252,23 +357,9 @@ class SpecifiedDatesEditorWindow(QMainWindow):
         self._update_calendar_formats()
 
     def _update_calendar_formats(self) -> None:
-        y = self._calendar.yearShown()
-        m = self._calendar.monthShown()
-        clear_fmt = QTextCharFormat()
-        for d in range(1, 32):
-            qd = QDate(y, m, d)
-            if qd.isValid():
-                self._calendar.setDateTextFormat(qd, clear_fmt)
         entry = self._current_entry()
-        if entry is None:
-            return
-        sel_fmt = QTextCharFormat()
-        sel_fmt.setBackground(QColor(255, 230, 160))
-        sel_fmt.setFontWeight(700)
-        for d in sorted(entry.dates):
-            qd = QDate(y, m, d)
-            if qd.isValid():
-                self._calendar.setDateTextFormat(qd, sel_fmt)
+        days = entry.dates if entry is not None else set()
+        self._calendar.set_highlight_dates(days)
 
     # -- file operations --
     def _on_open(self) -> None:
@@ -281,10 +372,18 @@ class SpecifiedDatesEditorWindow(QMainWindow):
             self._on_save_as()
             return
         self.save_to(self.current_path)
-        QMessageBox.information(self, "保存完了", f"{self.current_path.name} を保存しました。")
+        QMessageBox.information(
+            self,
+            "\u4fdd\u5b58\u5b8c\u4e86",
+            f"{self.current_path.name} \u3092\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002",
+        )
 
     def _on_save_as(self) -> None:
         path, _ = QFileDialog.getSaveFileName(self, "Save As", "", "TOML (*.toml)")
         if path:
             self.save_to(Path(path))
-            QMessageBox.information(self, "保存完了", f"{Path(path).name} を保存しました。")
+            QMessageBox.information(
+                self,
+                "\u4fdd\u5b58\u5b8c\u4e86",
+                f"{Path(path).name} \u3092\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002",
+            )
