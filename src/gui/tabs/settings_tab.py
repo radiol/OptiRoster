@@ -90,6 +90,7 @@ class SettingsTab(QWidget):
         from src.gui.editors.workers_editor import WorkersEditorWindow
 
         editor = self._registry.get_or_create("workers", WorkersEditorWindow)
+        editor.set_hospitals_path(self._paths.hospitals_toml)
         if editor.current_path is None and self._paths.workers_toml.exists():
             editor.open_path(self._paths.workers_toml)
 
