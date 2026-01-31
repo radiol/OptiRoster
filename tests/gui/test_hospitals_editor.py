@@ -131,9 +131,7 @@ class TestHospTblToModel:
 class TestApplyModelToHospTbl:
     def test_sets_basic_fields(self):
         tbl = tomlkit.table()
-        model = HospitalModel(
-            name="X", is_remote=True, is_university=False, shifts=[]
-        )
+        model = HospitalModel(name="X", is_remote=True, is_university=False, shifts=[])
         _apply_model_to_hosp_tbl(tbl, model)
         assert str(tbl["name"]) == "X"
         assert bool(tbl["is_remote"]) is True
@@ -142,9 +140,7 @@ class TestApplyModelToHospTbl:
     def test_sets_shifts(self):
         tbl = tomlkit.table()
         shift = ShiftModel(shift_type="AM", weekdays=["月曜"], frequency="毎週")
-        model = HospitalModel(
-            name="Y", is_remote=False, is_university=False, shifts=[shift]
-        )
+        model = HospitalModel(name="Y", is_remote=False, is_university=False, shifts=[shift])
         _apply_model_to_hosp_tbl(tbl, model)
         assert "shifts" in tbl
         assert len(tbl["shifts"]) == 1
@@ -154,20 +150,14 @@ class TestApplyModelToHospTbl:
         doc = tomlkit.parse(SAMPLE_TOML)
         tbl = doc["hospitals"][1]  # 病院B: 2 shifts
         new_shift = ShiftModel(shift_type="PM", weekdays=["金曜"], frequency="隔週")
-        model = HospitalModel(
-            name="病院B", is_remote=True, is_university=False, shifts=[new_shift]
-        )
+        model = HospitalModel(name="病院B", is_remote=True, is_university=False, shifts=[new_shift])
         _apply_model_to_hosp_tbl(tbl, model)
         assert len(tbl["shifts"]) == 1
         assert str(tbl["shifts"][0]["shift_type"]) == "PM"
 
     def test_roundtrip_model(self):
-        shift = ShiftModel(
-            shift_type="当直", weekdays=["月曜", "水曜"], frequency="毎週"
-        )
-        model = HospitalModel(
-            name="RT", is_remote=True, is_university=True, shifts=[shift]
-        )
+        shift = ShiftModel(shift_type="当直", weekdays=["月曜", "水曜"], frequency="毎週")
+        model = HospitalModel(name="RT", is_remote=True, is_university=True, shifts=[shift])
         tbl = tomlkit.table()
         _apply_model_to_hosp_tbl(tbl, model)
         result = _hosp_tbl_to_model(tbl)
@@ -207,7 +197,7 @@ class TestLoadDump:
         dump_hospitals_toml(model, out)
         reloaded = load_hospitals_toml(out)
         assert len(reloaded) == len(model)
-        for a, b in zip(model, reloaded):
+        for a, b in zip(model, reloaded, strict=True):
             assert a.name == b.name
             assert a.is_remote == b.is_remote
             assert a.is_university == b.is_university

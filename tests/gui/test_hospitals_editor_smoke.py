@@ -1,4 +1,4 @@
-"""Smoke tests: HospitalsEditorWindow の生成と open_path."""
+"""Smoke tests: HospitalsEditorWindow instantiation and open_path."""
 
 from pathlib import Path
 
@@ -46,14 +46,27 @@ class TestHospitalsEditorSmoke:
         editor.open_path(f)
         assert editor.current_path == f
 
-    def test_open_path_populates_text(self, editor, tmp_path: Path):
+    def test_open_path_populates_list(self, editor, tmp_path: Path):
         f = tmp_path / "h.toml"
         f.write_text(MINIMAL_TOML, encoding="utf-8")
         editor.open_path(f)
-        assert "TestH" in editor._text_edit.toPlainText()
+        assert editor.list_hosp.count() == 1
+        assert editor.list_hosp.item(0).text() == "TestH"
 
     def test_window_title_contains_filename(self, editor, tmp_path: Path):
         f = tmp_path / "h.toml"
         f.write_text(MINIMAL_TOML, encoding="utf-8")
         editor.open_path(f)
         assert "h.toml" in editor.windowTitle()
+
+    def test_save_to_produces_valid_toml(self, editor, tmp_path: Path):
+        src = tmp_path / "in.toml"
+        src.write_text(MINIMAL_TOML, encoding="utf-8")
+        editor.open_path(src)
+        out = tmp_path / "out.toml"
+        editor.save_to(out)
+        import tomlkit
+
+        parsed = tomlkit.parse(out.read_text(encoding="utf-8"))
+        assert "hospitals" in parsed
+        assert str(parsed["hospitals"][0]["name"]) == "TestH"
