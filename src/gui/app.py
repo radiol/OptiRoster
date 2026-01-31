@@ -420,65 +420,37 @@ class MainTab(QWidget):
             err(self, error_msg)
 
 
-# -------- 設定タブ（ランチャー） --------
-class SettingsTab(QWidget):
-    """各設定ファイル用 Editor Window を起動するランチャー."""
-
-    def __init__(self, main_window: "MainWindow", parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self._main_window = main_window
-
-        self.btn_hospitals = QPushButton("病院設定 (hospitals.toml) を編集")
-        self.btn_specified = QPushButton("病院別勤務希望日 (specified-dates.toml) を編集")
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.btn_hospitals)
-        layout.addWidget(self.btn_specified)
-        layout.addStretch()
-
-        self.btn_hospitals.clicked.connect(self._main_window.open_hospitals_editor)
-        self.btn_specified.clicked.connect(self._main_window.open_specified_editor)
-
-
 # -------- メインウィンドウ --------
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Duty Generator")
-        self._editors: dict[str, QMainWindow] = {}
+
+        from src.gui.common.window_registry import WindowRegistry
+        from src.gui.tabs.settings_tab import SettingsTab
+
+        self._registry = WindowRegistry()
+        self._editors = self._registry._windows  # 後方互換（テスト用）
 
         tabs = QTabWidget()
         tabs.addTab(MainTab(self), "メイン")
-        tabs.addTab(SettingsTab(self, self), "設定")
+        tabs.addTab(SettingsTab(paths=_paths, registry=self._registry, parent=self), "設定")
         self.setCentralWidget(tabs)
         self.resize(1000, 700)
 
-    # --- Editor 起動ヘルパー ---
-    def _open_editor(self, key: str, factory: type) -> None:
-        """key に対応するエディタが未起動なら生成、起動済みなら前面へ."""
-        editor = self._editors.get(key)
-        if editor is not None:
-            editor.show()
-            editor.raise_()
-            editor.activateWindow()
-            return
-        editor = factory(parent=None)
-        self._editors[key] = editor
-        editor.show()
-
     def open_hospitals_editor(self) -> None:
+        """後方互換: test_editor_launcher 用."""
         from src.gui.editors.hospitals_editor import HospitalsEditorWindow
 
-        self._open_editor("hospitals", HospitalsEditorWindow)
-        editor = self._editors["hospitals"]
+        editor = self._registry.get_or_create("hospitals", HospitalsEditorWindow)
         if editor.current_path is None and HOSPITALS_TOML_PATH.exists():
             editor.open_path(HOSPITALS_TOML_PATH)
 
     def open_specified_editor(self) -> None:
+        """後方互換: test_editor_launcher 用."""
         from src.gui.editors.specified_editor import SpecifiedDatesEditorWindow
 
-        self._open_editor("specified", SpecifiedDatesEditorWindow)
-        editor = self._editors["specified"]
+        editor = self._registry.get_or_create("specified", SpecifiedDatesEditorWindow)
         if editor.current_path is None and SPECIFIED_DATES_PATH.exists():
             editor.open_path(SPECIFIED_DATES_PATH)
 
