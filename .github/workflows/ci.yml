@@ -7,8 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install system dependencies for PySide6
-        run: sudo apt-get update && sudo apt-get install -y libegl1 libglib2.0-0 libxkbcommon-x11-0 libdbus-1-3
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -28,6 +26,13 @@ jobs:
       - name: Mypy
         run: |
           uv run --frozen mypy src
-      - name: Pytest
+      - name: Install system deps for Qt
         run: |
-          uv run --frozen -m pytest -q
+          sudo apt-get update
+          sudo apt-get install -y xvfb libxkbcommon-x11-0 libegl1 libgl1
+      - name: Run tests (Qt headless)
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QT_OPENGL: software
+        run: |
+          xvfb-run -a uv run --frozen -m pytest -q
