@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from PySide6.QtWidgets import (
-    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -40,8 +39,8 @@ class SettingsTab(QWidget):
 
         self.btn_hospitals.clicked.connect(self._open_hospitals)
         self.btn_specified.clicked.connect(self._open_specified)
-        self.btn_workers.clicked.connect(self._open_workers_stub)
-        self.btn_csv.clicked.connect(self._open_csv_stub)
+        self.btn_workers.clicked.connect(self._open_workers)
+        self.btn_csv.clicked.connect(self._open_csv)
 
     # --- editor 起動 ---
     def _open_hospitals(self) -> None:
@@ -58,8 +57,16 @@ class SettingsTab(QWidget):
         if editor.current_path is None and self._paths.specified_dates_toml.exists():
             editor.open_path(self._paths.specified_dates_toml)
 
-    def _open_workers_stub(self) -> None:
-        QMessageBox.information(self, "未実装", "Workers editor は後続ステップで実装します。")
+    def _open_workers(self) -> None:
+        from src.gui.editors.workers_editor import WorkersEditorWindow
 
-    def _open_csv_stub(self) -> None:
-        QMessageBox.information(self, "未実装", "CSV editor は後続ステップで実装します。")
+        editor = self._registry.get_or_create("workers", WorkersEditorWindow)
+        if editor.current_path is None and self._paths.workers_toml.exists():
+            editor.open_path(self._paths.workers_toml)
+
+    def _open_csv(self) -> None:
+        from src.gui.editors.csv_editor import CsvEditorWindow
+
+        editor = self._registry.get_or_create("csv", CsvEditorWindow)
+        if editor.current_path is None and self._paths.max_assignments_csv.exists():
+            editor.open_path(self._paths.max_assignments_csv)

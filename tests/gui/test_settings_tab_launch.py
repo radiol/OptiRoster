@@ -75,6 +75,24 @@ class TestSpecifiedButton:
             assert mock.call_args[0][0] == "specified"
 
 
+class TestWorkersButton:
+    def test_click_calls_registry_with_workers_key(self, tab, registry):
+        with patch.object(registry, "get_or_create", wraps=registry.get_or_create) as mock:
+            mock.return_value = QMainWindow()
+            tab.btn_workers.click()
+            mock.assert_called_once()
+            assert mock.call_args[0][0] == "workers"
+
+
+class TestCsvButton:
+    def test_click_calls_registry_with_csv_key(self, tab, registry):
+        with patch.object(registry, "get_or_create", wraps=registry.get_or_create) as mock:
+            mock.return_value = QMainWindow()
+            tab.btn_csv.click()
+            mock.assert_called_once()
+            assert mock.call_args[0][0] == "csv"
+
+
 class TestAllButtonsExist:
     def test_four_buttons(self, tab):
         """hospitals / specified / workers / csv の4ボタンが存在すること."""
