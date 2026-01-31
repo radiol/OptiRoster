@@ -467,24 +467,20 @@ class MainWindow(QMainWindow):
         editor.show()
 
     def open_hospitals_editor(self) -> None:
-        from src.gui.editors.hospitals_editor import get_editor_class
+        from src.gui.editors.hospitals_editor import HospitalsEditorWindow
 
-        HospitalsEditorWindow = get_editor_class()
         self._open_editor("hospitals", HospitalsEditorWindow)
         editor = self._editors["hospitals"]
-        if hasattr(editor, "current_path") and editor.current_path is None:
-            if HOSPITALS_TOML_PATH.exists():
-                editor.open_path(HOSPITALS_TOML_PATH)
+        if editor.current_path is None and HOSPITALS_TOML_PATH.exists():
+            editor.open_path(HOSPITALS_TOML_PATH)
 
     def open_specified_editor(self) -> None:
-        from src.gui.editors.specified_editor import get_editor_class
+        from src.gui.editors.specified_editor import SpecifiedDatesEditorWindow
 
-        SpecifiedDatesEditorWindow = get_editor_class()
         self._open_editor("specified", SpecifiedDatesEditorWindow)
         editor = self._editors["specified"]
-        if hasattr(editor, "current_path") and editor.current_path is None:
-            if SPECIFIED_DATES_PATH.exists():
-                editor.open_path(SPECIFIED_DATES_PATH)
+        if editor.current_path is None and SPECIFIED_DATES_PATH.exists():
+            editor.open_path(SPECIFIED_DATES_PATH)
 
 
 def main() -> None:
