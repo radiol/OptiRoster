@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Install system dependencies for PySide6
-        run: sudo apt-get update && sudo apt-get install -y libegl1-mesa libegl1-mesa-dev
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libglib2.0-0 libxkbcommon-x11-0 libdbus-1-3
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
         with:
