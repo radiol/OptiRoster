@@ -1,15 +1,12 @@
-"""Workers TOML editor -- model/TOML conversion logic + GUI window.
+"""Workers TOML editor -- GUI window for workers.toml.
 
-Conversion functions (load/dump) are pure Python and GUI-independent.
 GUI classes (AssignmentDialog, WorkersEditorWindow) require PySide6.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
-import tomlkit
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -31,69 +28,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.gui.editors.hospitals_editor import (
-    SHIFT_TYPES,
-    WEEKDAYS,
-    load_hospitals_toml,
-)
-
-# ---------------------------------------------------------------------------
-# Model type: list[dict] -- each element has {"name", "is_diagnostic_specialist", "assignments"}
-#   assignments is list[dict] -- {"hospital", "weekdays", "shift_type"}
-# ---------------------------------------------------------------------------
-WorkerModel = list[dict[str, Any]]
-
-
-def load_workers_toml(path: Path) -> WorkerModel:
-    """Read a TOML file and return it as a list of dicts."""
-    text = path.read_text(encoding="utf-8-sig")
-    if not text.strip():
-        return []
-    doc = tomlkit.parse(text)
-    result: WorkerModel = []
-    for w in doc.get("workers", []):
-        assignments: list[dict[str, Any]] = [
-            {
-                "hospital": str(a["hospital"]),
-                "weekdays": [str(d) for d in a.get("weekdays", [])],
-                "shift_type": str(a["shift_type"]),
-            }
-            for a in w.get("assignments", [])
-        ]
-        result.append(
-            {
-                "name": str(w["name"]),
-                "is_diagnostic_specialist": bool(w.get("is_diagnostic_specialist", False)),
-                "assignments": assignments,
-            }
-        )
-    return result
-
-
-def dump_workers_toml(model: WorkerModel, path: Path) -> None:
-    """Write a list of dicts to a TOML file."""
-    doc = tomlkit.document()
-    aot = tomlkit.aot()
-    for w in model:
-        tbl = tomlkit.table()
-        tbl.add("name", w["name"])
-        tbl.add("is_diagnostic_specialist", w["is_diagnostic_specialist"])
-        assignments = w.get("assignments", [])
-        if assignments:
-            assignments_aot = tomlkit.aot()
-            for a in assignments:
-                at = tomlkit.table()
-                at.add("hospital", a["hospital"])
-                weekdays = tomlkit.array()
-                for d in a["weekdays"]:
-                    weekdays.append(d)
-                at.add("weekdays", weekdays)
-                at.add("shift_type", a["shift_type"])
-                assignments_aot.append(at)
-            tbl.add("assignments", assignments_aot)
-        aot.append(tbl)
-    doc.add("workers", aot)
-    path.write_text(tomlkit.dumps(doc), encoding="utf-8")
+from src.domain.types import ShiftType, Weekday, Worker, WorkerAssignmentRule
+from src.gui.editors.hospitals_editor import SHIFT_TYPES, WEEKDAYS
+from src.io.hospitals_loader import load_hospitals
+from src.io.workers_loader import load_workers
+from src.io.workers_writer import dump_workers
 
 
 # ---------------------------------------------------------------------------
@@ -104,7 +43,7 @@ def load_hospital_choices(path: Path) -> list[str]:
     if not path.exists():
         return []
     try:
-        models = load_hospitals_toml(path)
+        models = load_hospitals(str(path))
     except Exception:
         return []
     return [m.name for m in models]
@@ -119,10 +58,10 @@ def build_combo_choices(known: list[str], current: str) -> list[str]:
     return [current, *known]
 
 
-def format_assignment_summary(a: dict[str, Any]) -> str:
-    """Format an assignment dict as a one-line summary string."""
-    weekdays_str = ",".join(a.get("weekdays", []))
-    return f"{a.get('hospital', '')} / {a.get('shift_type', '')} / {weekdays_str}"
+def format_assignment_summary(a: WorkerAssignmentRule) -> str:
+    """Format a WorkerAssignmentRule as a one-line summary string."""
+    weekdays_str = ",".join(wd.value for wd in a.weekdays)
+    return f"{a.hospital} / {a.shift_type.value} / {weekdays_str}"
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +73,7 @@ class AssignmentDialog(QDialog):
     def __init__(
         self,
         parent: QWidget | None = None,
-        initial: dict[str, Any] | None = None,
+        initial: WorkerAssignmentRule | None = None,
         hospital_choices: list[str] | None = None,
     ) -> None:
         super().__init__(parent)
@@ -145,8 +84,8 @@ class AssignmentDialog(QDialog):
         self.combo_hospital.setEditable(True)
         if hospital_choices:
             self.combo_hospital.addItems(hospital_choices)
-        if initial and initial.get("hospital"):
-            self.combo_hospital.setCurrentText(initial["hospital"])
+        if initial and initial.hospital:
+            self.combo_hospital.setCurrentText(initial.hospital)
         else:
             self.combo_hospital.setCurrentText("")
 
@@ -186,20 +125,20 @@ class AssignmentDialog(QDialog):
 
         # Apply initial values
         if initial:
-            if initial.get("shift_type") in SHIFT_TYPES:
-                self.combo_shift_type.setCurrentText(initial["shift_type"])
-            wset = set(initial.get("weekdays", []))
+            if initial.shift_type.value in SHIFT_TYPES:
+                self.combo_shift_type.setCurrentText(initial.shift_type.value)
+            wset = {wd.value for wd in initial.weekdays}
             for cb in self.week_checks:
                 cb.setChecked(cb.text() in wset)
 
-    def get_assignment(self) -> dict[str, Any]:
-        """Return the current assignment as a dict."""
-        weekdays = [cb.text() for cb in self.week_checks if cb.isChecked()]
-        return {
-            "hospital": self.combo_hospital.currentText(),
-            "weekdays": weekdays,
-            "shift_type": self.combo_shift_type.currentText(),
-        }
+    def get_assignment(self) -> WorkerAssignmentRule:
+        """Return the current assignment as a WorkerAssignmentRule."""
+        weekdays = [Weekday(cb.text()) for cb in self.week_checks if cb.isChecked()]
+        return WorkerAssignmentRule(
+            hospital=self.combo_hospital.currentText(),
+            weekdays=weekdays,
+            shift_type=ShiftType(self.combo_shift_type.currentText()),
+        )
 
     def _validate_then_accept(self) -> None:
         hospital = self.combo_hospital.currentText().strip()
@@ -224,7 +163,7 @@ class WorkersEditorWindow(QMainWindow):
         self.setWindowTitle("Workers Editor")
         self.resize(900, 600)
         self.current_path: Path | None = None
-        self._model: WorkerModel = []
+        self._model: list[Worker] = []
         self._current_index: int = -1
         self._hospitals_path: Path | None = None
 
@@ -306,7 +245,7 @@ class WorkersEditorWindow(QMainWindow):
     def open_path(self, path: Path) -> None:
         """Load a workers.toml file."""
         try:
-            self._model = load_workers_toml(path)
+            self._model = load_workers(str(path))
             self._current_index = -1
             self._refresh_list()
             self.current_path = path
@@ -319,7 +258,7 @@ class WorkersEditorWindow(QMainWindow):
     def save_to(self, path: Path) -> None:
         """Write model to a TOML file."""
         self._commit_current()
-        dump_workers_toml(self._model, path)
+        dump_workers(self._model, str(path))
         self.current_path = path
         self.setWindowTitle(f"Workers Editor \u2014 {path.name}")
 
@@ -341,12 +280,11 @@ class WorkersEditorWindow(QMainWindow):
         if self._current_index < 0 or self._current_index >= len(self._model):
             return
         w = self._model[self._current_index]
-        w["name"] = self._name_edit.text()
-        w["is_diagnostic_specialist"] = self._specialist_check.isChecked()
-        # Assignments are updated directly via dialog, no text parsing needed
+        w.name = self._name_edit.text()
+        w.is_diagnostic_specialist = self._specialist_check.isChecked()
         item = self._worker_list.item(self._current_index)
         if item:
-            item.setText(w["name"])
+            item.setText(w.name)
 
     def _load_worker_to_form(self, index: int) -> None:
         """Display worker data in the detail form."""
@@ -356,11 +294,11 @@ class WorkersEditorWindow(QMainWindow):
             self._assignments_list.clear()
             return
         w = self._model[index]
-        self._name_edit.setText(w["name"])
-        self._specialist_check.setChecked(w["is_diagnostic_specialist"])
-        self._refresh_assignments_list(w.get("assignments", []))
+        self._name_edit.setText(w.name)
+        self._specialist_check.setChecked(w.is_diagnostic_specialist)
+        self._refresh_assignments_list(w.assignments)
 
-    def _refresh_assignments_list(self, assignments: list[dict[str, Any]]) -> None:
+    def _refresh_assignments_list(self, assignments: list[WorkerAssignmentRule]) -> None:
         """Rebuild the assignments list widget from data."""
         self._assignments_list.clear()
         for a in assignments:
@@ -370,7 +308,7 @@ class WorkersEditorWindow(QMainWindow):
         """Rebuild the worker list widget from the model."""
         self._worker_list.clear()
         for w in self._model:
-            self._worker_list.addItem(w["name"])
+            self._worker_list.addItem(w.name)
 
     # --- private: worker CRUD slots ---
     def _on_selection_changed(self, row: int) -> None:
@@ -380,13 +318,13 @@ class WorkersEditorWindow(QMainWindow):
 
     def _on_add(self) -> None:
         self._commit_current()
-        new_worker: dict[str, Any] = {
-            "name": "New Worker",
-            "is_diagnostic_specialist": False,
-            "assignments": [],
-        }
+        new_worker = Worker(
+            name="New Worker",
+            assignments=[],
+            is_diagnostic_specialist=False,
+        )
         self._model.append(new_worker)
-        self._worker_list.addItem(new_worker["name"])
+        self._worker_list.addItem(new_worker.name)
         self._worker_list.setCurrentRow(len(self._model) - 1)
 
     def _on_delete(self) -> None:
@@ -414,7 +352,7 @@ class WorkersEditorWindow(QMainWindow):
             return
         a = dlg.get_assignment()
         w = self._model[self._current_index]
-        w["assignments"].append(a)
+        w.assignments.append(a)
         self._assignments_list.addItem(format_assignment_summary(a))
 
     def _on_edit_assignment(self) -> None:
@@ -422,17 +360,16 @@ class WorkersEditorWindow(QMainWindow):
             return
         arow = self._assignments_list.currentRow()
         w = self._model[self._current_index]
-        assignments = w.get("assignments", [])
-        if arow < 0 or arow >= len(assignments):
+        if arow < 0 or arow >= len(w.assignments):
             QMessageBox.information(self, "Info", "編集する assignment を選択してください。")
             return
-        current_a = assignments[arow]
-        choices = self._get_hospital_choices(current_a.get("hospital", ""))
+        current_a = w.assignments[arow]
+        choices = self._get_hospital_choices(current_a.hospital)
         dlg = AssignmentDialog(self, initial=current_a, hospital_choices=choices)
         if dlg.exec() != QDialog.DialogCode.Accepted:
             return
         new_a = dlg.get_assignment()
-        assignments[arow] = new_a
+        w.assignments[arow] = new_a
         item = self._assignments_list.item(arow)
         if item:
             item.setText(format_assignment_summary(new_a))
@@ -442,11 +379,10 @@ class WorkersEditorWindow(QMainWindow):
             return
         arow = self._assignments_list.currentRow()
         w = self._model[self._current_index]
-        assignments = w.get("assignments", [])
-        if arow < 0 or arow >= len(assignments):
+        if arow < 0 or arow >= len(w.assignments):
             QMessageBox.information(self, "Info", "削除する assignment を選択してください。")
             return
-        assignments.pop(arow)
+        w.assignments.pop(arow)
         self._assignments_list.takeItem(arow)
 
     # --- private: file operation slots ---

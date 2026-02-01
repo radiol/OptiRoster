@@ -6,7 +6,6 @@ GUI classes (ShiftDialog, HospitalDialog, HospitalsEditorWindow) require PySide6
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import cast
 
@@ -34,30 +33,14 @@ from PySide6.QtWidgets import (
 )
 from tomlkit import aot, document, parse, table
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-SHIFT_TYPES: list[str] = ["AM", "PM", "日勤", "当直"]
-FREQUENCIES: list[str] = ["毎週", "隔週", "指定日"]
-WEEKDAYS: list[str] = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
-
+from src.domain.types import Frequency, Hospital, HospitalDemandRule, ShiftType, Weekday
 
 # ---------------------------------------------------------------------------
-# Model (dataclass)
+# Constants (derived from domain enums)
 # ---------------------------------------------------------------------------
-@dataclass
-class ShiftModel:
-    shift_type: str
-    weekdays: list[str] = field(default_factory=list)
-    frequency: str = "毎週"
-
-
-@dataclass
-class HospitalModel:
-    name: str
-    is_remote: bool = False
-    is_university: bool = False
-    shifts: list[ShiftModel] = field(default_factory=list)
+SHIFT_TYPES: list[str] = [st.value for st in ShiftType]
+FREQUENCIES: list[str] = [f.value for f in Frequency]
+WEEKDAYS: list[str] = [wd.value for wd in Weekday]
 
 
 # ---------------------------------------------------------------------------
@@ -77,31 +60,31 @@ def _ensure_shifts(hosp_tbl: tomlkit.items.Table) -> tomlkit.items.AoT:
     return cast(tomlkit.items.AoT, hosp_tbl["shifts"])
 
 
-def _hosp_tbl_to_model(h: tomlkit.items.Table) -> HospitalModel:
-    """tomlkit table -> HospitalModel dataclass."""
-    shifts: list[ShiftModel] = []
+def _hosp_tbl_to_model(h: tomlkit.items.Table) -> Hospital:
+    """tomlkit table -> Hospital domain object."""
+    demand_rules: list[HospitalDemandRule] = []
     if "shifts" in h and h["shifts"] is not None:
-        shifts = [
-            ShiftModel(
-                shift_type=str(s.get("shift_type", "")),
-                weekdays=[str(x) for x in (s.get("weekdays", []) or [])],
-                frequency=str(s.get("frequency", "")),
+        demand_rules = [
+            HospitalDemandRule(
+                shift_type=ShiftType(str(s.get("shift_type", ""))),
+                weekdays=[Weekday(str(x)) for x in (s.get("weekdays", []) or [])],
+                frequency=Frequency(str(s.get("frequency", ""))),
             )
             for s in cast(tomlkit.items.AoT, h["shifts"])
         ]
-    return HospitalModel(
+    return Hospital(
         name=str(h.get("name", "")),
         is_remote=bool(h.get("is_remote", False)),
         is_university=bool(h.get("is_university", False)),
-        shifts=shifts,
+        demand_rules=demand_rules,
     )
 
 
 def _apply_model_to_hosp_tbl(
     hosp_tbl: tomlkit.items.Table,
-    model: HospitalModel,
+    model: Hospital,
 ) -> None:
-    """HospitalModel dataclass -> tomlkit table (in-place update)."""
+    """Hospital domain object -> tomlkit table (in-place update)."""
     hosp_tbl["name"] = model.name
     hosp_tbl["is_remote"] = bool(model.is_remote)
     hosp_tbl["is_university"] = bool(model.is_university)
@@ -110,36 +93,12 @@ def _apply_model_to_hosp_tbl(
     while len(shifts_aot) > 0:
         shifts_aot.pop()
 
-    for sm in model.shifts:
+    for rule in model.demand_rules:
         st = table()
-        st["shift_type"] = sm.shift_type
-        st["weekdays"] = sm.weekdays
-        st["frequency"] = sm.frequency
+        st["shift_type"] = rule.shift_type.value
+        st["weekdays"] = [wd.value for wd in rule.weekdays]
+        st["frequency"] = rule.frequency.value
         shifts_aot.append(st)
-
-
-# ---------------------------------------------------------------------------
-# Public file-level IO (backward-compatible function names)
-# ---------------------------------------------------------------------------
-def load_hospitals_toml(path: Path) -> list[HospitalModel]:
-    """TOML file -> list[HospitalModel]."""
-    text = path.read_text(encoding="utf-8-sig")
-    if not text.strip():
-        return []
-    doc = parse(text)
-    return [_hosp_tbl_to_model(h) for h in doc.get("hospitals", [])]
-
-
-def dump_hospitals_toml(model: list[HospitalModel], path: Path) -> None:
-    """list[HospitalModel] -> TOML file."""
-    doc = document()
-    hospitals_aot = aot()
-    for m in model:
-        tbl = table()
-        _apply_model_to_hosp_tbl(tbl, m)
-        hospitals_aot.append(tbl)
-    doc["hospitals"] = hospitals_aot
-    path.write_text(doc.as_string(), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -153,7 +112,7 @@ class ShiftDialog(QDialog):
     def __init__(
         self,
         parent: QWidget | None = None,
-        initial: ShiftModel | None = None,
+        initial: HospitalDemandRule | None = None,
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle("シフト編集")
@@ -194,20 +153,20 @@ class ShiftDialog(QDialog):
         self.setLayout(root)
 
         if initial:
-            if initial.shift_type in SHIFT_TYPES:
-                self.combo_type.setCurrentText(initial.shift_type)
-            if initial.frequency in FREQUENCIES:
-                self.combo_freq.setCurrentText(initial.frequency)
-            wset = set(initial.weekdays)
+            if initial.shift_type.value in SHIFT_TYPES:
+                self.combo_type.setCurrentText(initial.shift_type.value)
+            if initial.frequency.value in FREQUENCIES:
+                self.combo_freq.setCurrentText(initial.frequency.value)
+            wset = {wd.value for wd in initial.weekdays}
             for cb in self.week_checks:
                 cb.setChecked(cb.text() in wset)
 
-    def get_model(self) -> ShiftModel:
-        weekdays = [cb.text() for cb in self.week_checks if cb.isChecked()]
-        return ShiftModel(
-            shift_type=self.combo_type.currentText(),
+    def get_model(self) -> HospitalDemandRule:
+        weekdays = [Weekday(cb.text()) for cb in self.week_checks if cb.isChecked()]
+        return HospitalDemandRule(
+            shift_type=ShiftType(self.combo_type.currentText()),
             weekdays=weekdays,
-            frequency=self.combo_freq.currentText(),
+            frequency=Frequency(self.combo_freq.currentText()),
         )
 
     def _validate_then_accept(self) -> None:
@@ -224,7 +183,7 @@ class HospitalDialog(QDialog):
     def __init__(
         self,
         parent: QWidget | None = None,
-        initial: HospitalModel | None = None,
+        initial: Hospital | None = None,
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle("病院編集")
@@ -279,26 +238,26 @@ class HospitalDialog(QDialog):
             self.edit_name.setText(initial.name)
             self.chk_remote.setChecked(initial.is_remote)
             self.chk_univ.setChecked(initial.is_university)
-            for s in initial.shifts:
+            for s in initial.demand_rules:
                 self._append_shift_row(s)
 
     # -- shift table helpers --
-    def _append_shift_row(self, s: ShiftModel) -> None:
+    def _append_shift_row(self, s: HospitalDemandRule) -> None:
         r = self.shift_table.rowCount()
         self.shift_table.insertRow(r)
-        self.shift_table.setItem(r, 0, QTableWidgetItem(s.shift_type))
-        self.shift_table.setItem(r, 1, QTableWidgetItem(",".join(s.weekdays)))
-        self.shift_table.setItem(r, 2, QTableWidgetItem(s.frequency))
+        self.shift_table.setItem(r, 0, QTableWidgetItem(s.shift_type.value))
+        self.shift_table.setItem(r, 1, QTableWidgetItem(",".join(wd.value for wd in s.weekdays)))
+        self.shift_table.setItem(r, 2, QTableWidgetItem(s.frequency.value))
 
-    def _row_to_shift(self, row: int) -> ShiftModel:
+    def _row_to_shift(self, row: int) -> HospitalDemandRule:
         stype = self.shift_table.item(row, 0)
         wds = self.shift_table.item(row, 1)
         freq = self.shift_table.item(row, 2)
-        weekdays = [x for x in (wds.text() if wds else "").split(",") if x]
-        return ShiftModel(
-            shift_type=stype.text() if stype else "",
+        weekdays = [Weekday(x) for x in (wds.text() if wds else "").split(",") if x]
+        return HospitalDemandRule(
+            shift_type=ShiftType(stype.text() if stype else ""),
             weekdays=weekdays,
-            frequency=freq.text() if freq else "",
+            frequency=Frequency(freq.text() if freq else ""),
         )
 
     def _selected_row(self) -> int | None:
@@ -321,7 +280,9 @@ class HospitalDialog(QDialog):
         dlg = ShiftDialog(self, current)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             m = dlg.get_model()
-            for col, val in enumerate([m.shift_type, ",".join(m.weekdays), m.frequency]):
+            for col, val in enumerate(
+                [m.shift_type.value, ",".join(wd.value for wd in m.weekdays), m.frequency.value]
+            ):
                 item = self.shift_table.item(row, col)
                 if item is not None:
                     item.setText(val)
@@ -349,13 +310,13 @@ class HospitalDialog(QDialog):
                 return
         self.accept()
 
-    def get_model(self) -> HospitalModel:
-        shifts = [self._row_to_shift(r) for r in range(self.shift_table.rowCount())]
-        return HospitalModel(
+    def get_model(self) -> Hospital:
+        demand_rules = [self._row_to_shift(r) for r in range(self.shift_table.rowCount())]
+        return Hospital(
             name=self.edit_name.text().strip(),
             is_remote=self.chk_remote.isChecked(),
             is_university=self.chk_univ.isChecked(),
-            shifts=shifts,
+            demand_rules=demand_rules,
         )
 
 
@@ -503,12 +464,14 @@ class HospitalsEditorWindow(QMainWindow):
         m = _hosp_tbl_to_model(hosps[row])
         self._lbl_name.setText(f"name: {m.name}")
         self._lbl_flags.setText(f"is_remote: {m.is_remote}   is_university: {m.is_university}")
-        for s in m.shifts:
+        for s in m.demand_rules:
             r = self._shift_table.rowCount()
             self._shift_table.insertRow(r)
-            self._shift_table.setItem(r, 0, QTableWidgetItem(s.shift_type))
-            self._shift_table.setItem(r, 1, QTableWidgetItem(",".join(s.weekdays)))
-            self._shift_table.setItem(r, 2, QTableWidgetItem(s.frequency))
+            self._shift_table.setItem(r, 0, QTableWidgetItem(s.shift_type.value))
+            self._shift_table.setItem(
+                r, 1, QTableWidgetItem(",".join(wd.value for wd in s.weekdays))
+            )
+            self._shift_table.setItem(r, 2, QTableWidgetItem(s.frequency.value))
 
     # -- CRUD --
     def _add_hospital(self) -> None:

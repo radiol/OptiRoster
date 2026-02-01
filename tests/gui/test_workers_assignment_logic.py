@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from src.domain.types import ShiftType, Weekday, WorkerAssignmentRule
 from src.gui.editors.workers_editor import (
     build_combo_choices,
     format_assignment_summary,
@@ -69,16 +70,28 @@ class TestBuildComboChoices:
 
 class TestFormatAssignmentSummary:
     def test_full_assignment(self) -> None:
-        a = {"hospital": "病院A", "weekdays": ["月曜", "火曜"], "shift_type": "日勤"}
+        a = WorkerAssignmentRule(
+            hospital="病院A",
+            weekdays=[Weekday.MONDAY, Weekday.TUESDAY],
+            shift_type=ShiftType.DAY,
+        )
         result = format_assignment_summary(a)
         assert result == "病院A / 日勤 / 月曜,火曜"
 
     def test_empty_weekdays(self) -> None:
-        a = {"hospital": "病院A", "weekdays": [], "shift_type": "AM"}
+        a = WorkerAssignmentRule(
+            hospital="病院A",
+            weekdays=[],
+            shift_type=ShiftType.AM,
+        )
         result = format_assignment_summary(a)
         assert result == "病院A / AM / "
 
     def test_single_weekday(self) -> None:
-        a = {"hospital": "病院B", "weekdays": ["水曜"], "shift_type": "当直"}
+        a = WorkerAssignmentRule(
+            hospital="病院B",
+            weekdays=[Weekday.WEDNESDAY],
+            shift_type=ShiftType.NIGHT,
+        )
         result = format_assignment_summary(a)
         assert result == "病院B / 当直 / 水曜"

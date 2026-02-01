@@ -7,11 +7,9 @@ from pathlib import Path
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from src.gui.editors.workers_editor import (
-    AssignmentDialog,
-    WorkersEditorWindow,
-    load_workers_toml,
-)
+from src.domain.types import ShiftType, Weekday, WorkerAssignmentRule
+from src.gui.editors.workers_editor import AssignmentDialog, WorkersEditorWindow
+from src.io.workers_loader import load_workers
 
 SAMPLE_WORKERS_TOML = """\
 [[workers]]
@@ -60,29 +58,41 @@ class TestAssignmentDialog:
     def test_defaults(self, qapp) -> None:
         dlg = AssignmentDialog()
         a = dlg.get_assignment()
-        assert a["hospital"] == ""
-        assert a["weekdays"] == []
-        assert a["shift_type"] in ("AM", "PM", "日勤", "当直")
+        assert a.hospital == ""
+        assert a.weekdays == []
+        assert isinstance(a.shift_type, ShiftType)
         dlg.close()
 
     def test_initial_values(self, qapp) -> None:
-        initial = {"hospital": "病院1", "weekdays": ["月曜", "火曜"], "shift_type": "日勤"}
+        initial = WorkerAssignmentRule(
+            hospital="病院1",
+            weekdays=[Weekday.MONDAY, Weekday.TUESDAY],
+            shift_type=ShiftType.DAY,
+        )
         dlg = AssignmentDialog(initial=initial)
         a = dlg.get_assignment()
-        assert a["hospital"] == "病院1"
-        assert a["weekdays"] == ["月曜", "火曜"]
-        assert a["shift_type"] == "日勤"
+        assert a.hospital == "病院1"
+        assert a.weekdays == [Weekday.MONDAY, Weekday.TUESDAY]
+        assert a.shift_type == ShiftType.DAY
         dlg.close()
 
     def test_with_hospital_choices(self, qapp) -> None:
-        initial = {"hospital": "病院A", "weekdays": ["水曜"], "shift_type": "AM"}
+        initial = WorkerAssignmentRule(
+            hospital="病院A",
+            weekdays=[Weekday.WEDNESDAY],
+            shift_type=ShiftType.AM,
+        )
         dlg = AssignmentDialog(initial=initial, hospital_choices=["病院A", "病院B"])
         assert dlg.combo_hospital.count() == 2
         assert dlg.combo_hospital.currentText() == "病院A"
         dlg.close()
 
     def test_unknown_hospital_in_choices(self, qapp) -> None:
-        initial = {"hospital": "病院X", "weekdays": ["水曜"], "shift_type": "AM"}
+        initial = WorkerAssignmentRule(
+            hospital="病院X",
+            weekdays=[Weekday.WEDNESDAY],
+            shift_type=ShiftType.AM,
+        )
         dlg = AssignmentDialog(initial=initial, hospital_choices=["病院A", "病院B"])
         # editable combo allows unknown hospitals
         assert dlg.combo_hospital.currentText() == "病院X"
@@ -119,9 +129,9 @@ class TestWorkersEditorAssignmentsList:
         editor.open_path(src)
         out = tmp_path / "out.toml"
         editor.save_to(out)
-        reloaded = load_workers_toml(out)
-        assert len(reloaded[0]["assignments"]) == 1
-        a = reloaded[0]["assignments"][0]
-        assert a["hospital"] == "病院1"
-        assert a["weekdays"] == ["月曜", "火曜"]
-        assert a["shift_type"] == "日勤"
+        reloaded = load_workers(str(out))
+        assert len(reloaded[0].assignments) == 1
+        a = reloaded[0].assignments[0]
+        assert a.hospital == "病院1"
+        assert a.weekdays[0].value == "月曜"
+        assert a.shift_type.value == "日勤"

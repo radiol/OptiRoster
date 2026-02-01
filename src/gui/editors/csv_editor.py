@@ -1,13 +1,10 @@
-"""CSV editor — QTableWidget ベースの編集ウィンドウ.
+"""CSV editor -- QTableWidget-based editing window for max-assignments.csv.
 
-max-assignments.csv 等を表形式で編集し、Open / Save / Save As を提供する。
-.bak は作らない(Save As で代替)。
+Uses src/io/max_assignments_loader and max_assignments_writer for IO.
 """
 
 from __future__ import annotations
 
-import csv
-import io
 from pathlib import Path
 
 from PySide6.QtCore import Qt
@@ -23,9 +20,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.io.max_assignments_loader import load_max_assignments_csv
+from src.io.max_assignments_writer import dump_max_assignments_csv
+
 
 class CsvEditorWindow(QMainWindow):
-    """CSV ファイルを QTableWidget で編集するウィンドウ."""
+    """max-assignments.csv を QTableWidget で編集するウィンドウ."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -62,53 +62,84 @@ class CsvEditorWindow(QMainWindow):
     def open_path(self, path: Path) -> None:
         """CSV ファイルを読み込んでテーブルに表示する."""
         try:
-            text = path.read_text(encoding="utf-8-sig")
-            if not text.strip():
+            if not path.read_text(encoding="utf-8-sig").strip():
                 self._table.clear()
                 self._table.setRowCount(0)
                 self._table.setColumnCount(0)
                 self.current_path = path
-                self.setWindowTitle(f"CSV Editor — {path.name}")
+                self.setWindowTitle(f"CSV Editor \u2014 {path.name}")
                 return
-            reader = csv.reader(io.StringIO(text))
-            rows = list(reader)
-            if not rows:
-                return
-            headers = rows[0]
-            data = rows[1:]
-            self._table.clear()
-            self._table.setColumnCount(len(headers))
-            self._table.setRowCount(len(data))
-            self._table.setHorizontalHeaderLabels(headers)
-            for r, row in enumerate(data):
-                for c, val in enumerate(row):
-                    self._table.setItem(r, c, QTableWidgetItem(val))
-            self._table.resizeColumnsToContents()
+            data = load_max_assignments_csv(str(path))
+            self._populate_table(data)
             self.current_path = path
-            self.setWindowTitle(f"CSV Editor — {path.name}")
+            self.setWindowTitle(f"CSV Editor \u2014 {path.name}")
         except Exception as e:
-            QMessageBox.critical(self, "エラー", f"読み込みに失敗:\n{e}")
+            QMessageBox.critical(
+                self, "\u30a8\u30e9\u30fc", f"\u8aad\u307f\u8fbc\u307f\u306b\u5931\u6557:\n{e}"
+            )
 
     def save_to(self, path: Path) -> None:
         """テーブルの内容を CSV に書き出す."""
-        rows_count = self._table.rowCount()
-        cols_count = self._table.columnCount()
-        headers = []
-        for c in range(cols_count):
-            h = self._table.horizontalHeaderItem(c)
-            headers.append(h.text() if h else f"col{c}")
-        buf = io.StringIO()
-        writer = csv.writer(buf, lineterminator="\n")
-        writer.writerow(headers)
-        for r in range(rows_count):
-            row = []
-            for c in range(cols_count):
-                item = self._table.item(r, c)
-                row.append(item.text() if item else "")
-            writer.writerow(row)
-        path.write_text(buf.getvalue(), encoding="utf-8")
+        data = self._read_table_model()
+        dump_max_assignments_csv(data, str(path))
         self.current_path = path
-        self.setWindowTitle(f"CSV Editor — {path.name}")
+        self.setWindowTitle(f"CSV Editor \u2014 {path.name}")
+
+    # --- private: model <-> table ---
+    def _populate_table(self, data: dict[tuple[str, str], int | None]) -> None:
+        """Populate the QTableWidget from a max-assignments dict."""
+        workers: list[str] = []
+        hospitals: list[str] = []
+        workers_seen: set[str] = set()
+        hospitals_seen: set[str] = set()
+        for worker, hospital in data:
+            if worker not in workers_seen:
+                workers.append(worker)
+                workers_seen.add(worker)
+            if hospital not in hospitals_seen:
+                hospitals.append(hospital)
+                hospitals_seen.add(hospital)
+
+        self._table.clear()
+        self._table.setColumnCount(1 + len(hospitals))
+        self._table.setRowCount(len(workers))
+        self._table.setHorizontalHeaderLabels(["Name", *hospitals])
+
+        for r, worker in enumerate(workers):
+            self._table.setItem(r, 0, QTableWidgetItem(worker))
+            for c, hospital in enumerate(hospitals):
+                cap = data.get((worker, hospital))
+                text = "" if cap is None else str(cap)
+                self._table.setItem(r, c + 1, QTableWidgetItem(text))
+
+        self._table.resizeColumnsToContents()
+
+    def _read_table_model(self) -> dict[tuple[str, str], int | None]:
+        """Read the QTableWidget into a max-assignments dict."""
+        data: dict[tuple[str, str], int | None] = {}
+        cols = self._table.columnCount()
+        rows = self._table.rowCount()
+
+        hospitals: list[str] = []
+        for c in range(1, cols):
+            h = self._table.horizontalHeaderItem(c)
+            hospitals.append(h.text() if h else f"col{c}")
+
+        for r in range(rows):
+            name_item = self._table.item(r, 0)
+            name = (name_item.text() if name_item else "").strip()
+            if not name:
+                continue
+            for c, hospital in enumerate(hospitals):
+                item = self._table.item(r, c + 1)
+                raw = (item.text() if item else "").strip()
+                if raw == "":
+                    cap: int | None = None
+                else:
+                    cap = int(raw)
+                data[(name, hospital)] = cap
+
+        return data
 
     # --- private ---
     def _on_open(self) -> None:
@@ -121,13 +152,21 @@ class CsvEditorWindow(QMainWindow):
             self._on_save_as()
             return
         self.save_to(self.current_path)
-        QMessageBox.information(self, "保存完了", f"{self.current_path.name} を保存しました。")
+        QMessageBox.information(
+            self,
+            "\u4fdd\u5b58\u5b8c\u4e86",
+            f"{self.current_path.name} \u3092\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002",
+        )
 
     def _on_save_as(self) -> None:
         path, _ = QFileDialog.getSaveFileName(self, "Save As", "", "CSV (*.csv)")
         if path:
             self.save_to(Path(path))
-            QMessageBox.information(self, "保存完了", f"{Path(path).name} を保存しました。")
+            QMessageBox.information(
+                self,
+                "\u4fdd\u5b58\u5b8c\u4e86",
+                f"{Path(path).name} \u3092\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002",
+            )
 
     def _install_key_filter(self) -> None:
         """Delete / Backspace でセルクリアを有効にする."""
