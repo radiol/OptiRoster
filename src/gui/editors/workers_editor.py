@@ -31,11 +31,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from src.gui.editors.hospitals_editor import (
-    SHIFT_TYPES,
-    WEEKDAYS,
-    load_hospitals_toml,
-)
+from src.gui.editors.hospitals_editor import SHIFT_TYPES, WEEKDAYS
+from src.io.hospitals_loader import load_hospitals
 
 # ---------------------------------------------------------------------------
 # Model type: list[dict] -- each element has {"name", "is_diagnostic_specialist", "assignments"}
@@ -104,7 +101,7 @@ def load_hospital_choices(path: Path) -> list[str]:
     if not path.exists():
         return []
     try:
-        models = load_hospitals_toml(path)
+        models = load_hospitals(str(path))
     except Exception:
         return []
     return [m.name for m in models]
