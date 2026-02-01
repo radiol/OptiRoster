@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import date
 
 from src.gui.editors.specified_editor import (
+    get_addable_hospitals,
     get_default_month,
     is_in_displayed_month,
 )
@@ -46,3 +47,18 @@ class TestIsInDisplayedMonth:
 
     def test_different_year_returns_false(self):
         assert is_in_displayed_month(2025, 12, 2026, 1) is False
+
+
+# -- get_addable_hospitals ---------------------------------------------------
+class TestGetAddableHospitals:
+    def test_filters_already_added(self) -> None:
+        assert get_addable_hospitals(["A", "B", "C"], {"A"}) == ["B", "C"]
+
+    def test_all_added_returns_empty(self) -> None:
+        assert get_addable_hospitals(["A", "B"], {"A", "B"}) == []
+
+    def test_none_added_returns_all(self) -> None:
+        assert get_addable_hospitals(["A", "B"], set()) == ["A", "B"]
+
+    def test_empty_known_returns_empty(self) -> None:
+        assert get_addable_hospitals([], {"A"}) == []

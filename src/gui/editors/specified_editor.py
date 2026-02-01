@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.editors.workers_editor import load_hospital_choices
 from src.io.specified_days_loader import load_specified_days
 from src.io.specified_days_writer import dump_specified_days
 
@@ -38,6 +39,11 @@ def get_default_month(today: date) -> tuple[int, int]:
     if today.month == 12:
         return (today.year + 1, 1)
     return (today.year, today.month + 1)
+
+
+def get_addable_hospitals(known: list[str], already_added: set[str]) -> list[str]:
+    """Return hospitals from *known* that are not yet in *already_added*."""
+    return [h for h in known if h not in already_added]
 
 
 def is_in_displayed_month(
@@ -133,6 +139,7 @@ class SpecifiedDatesEditorWindow(QMainWindow):
         self.resize(900, 600)
         self.current_path: Path | None = None
         self._model: dict[str, set[int]] = {}
+        self._hospitals_path: Path | None = None
 
         # -- left: hospital list --
         self.list_hosp = QListWidget()
@@ -214,6 +221,10 @@ class SpecifiedDatesEditorWindow(QMainWindow):
                 self, "\u30a8\u30e9\u30fc", f"\u8aad\u307f\u8fbc\u307f\u306b\u5931\u6557:\n{e}"
             )
 
+    def set_hospitals_path(self, path: Path) -> None:
+        """Set the path to hospitals.toml for hospital name choices."""
+        self._hospitals_path = path
+
     def save_to(self, path: Path) -> None:
         """Write model to a TOML file."""
         data = {name: sorted(days) for name, days in self._model.items()}
@@ -245,18 +256,23 @@ class SpecifiedDatesEditorWindow(QMainWindow):
 
     # -- CRUD --
     def _add_hospital(self) -> None:
-        name, ok = QInputDialog.getText(self, "\u75c5\u9662\u8ffd\u52a0", "\u75c5\u9662\u540d:")
-        if not ok:
+        known: list[str] = []
+        if self._hospitals_path is not None:
+            known = load_hospital_choices(self._hospitals_path)
+        choices = get_addable_hospitals(known, set(self._model.keys()))
+        if not choices:
+            QMessageBox.information(
+                self,
+                "\u60c5\u5831",
+                "\u8ffd\u52a0\u53ef\u80fd\u306a\u75c5\u9662\u304c\u3042\u308a\u307e\u305b\u3093\u3002",
+            )
             return
-        name = name.strip()
-        if not name:
+        name, ok = QInputDialog.getItem(
+            self, "\u75c5\u9662\u8ffd\u52a0", "\u75c5\u9662\u540d:", choices, editable=False
+        )
+        if not ok or not name:
             return
         if name in self._model:
-            QMessageBox.warning(
-                self,
-                "\u91cd\u8907",
-                "\u305d\u306e\u75c5\u9662\u540d\u306f\u65e2\u306b\u5b58\u5728\u3057\u307e\u3059\u3002",
-            )
             return
         self._model[name] = set()
         self._refresh_hospital_list()

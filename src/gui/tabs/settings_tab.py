@@ -83,6 +83,7 @@ class SettingsTab(QWidget):
         from src.gui.editors.specified_editor import SpecifiedDatesEditorWindow
 
         editor = self._registry.get_or_create("specified", SpecifiedDatesEditorWindow)
+        editor.set_hospitals_path(self._paths.hospitals_toml)
         if editor.current_path is None and self._paths.specified_dates_toml.exists():
             editor.open_path(self._paths.specified_dates_toml)
 

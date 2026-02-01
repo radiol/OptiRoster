@@ -8,14 +8,33 @@ from PySide6.QtWidgets import QApplication, QCalendarWidget
 
 from src.gui.editors.specified_editor import (
     SpecifiedDatesEditorWindow,
+    get_addable_hospitals,
     get_default_month,
 )
+from src.gui.editors.workers_editor import load_hospital_choices
 from src.io.specified_days_loader import load_specified_days
 
 MINIMAL_TOML = """\
 [[hospitals]]
 name = "TestH"
 dates = [1, 15]
+"""
+
+SAMPLE_HOSPITALS_TOML = """\
+[[hospitals]]
+name = "TestH"
+is_remote = false
+is_university = false
+
+[[hospitals]]
+name = "HospB"
+is_remote = false
+is_university = false
+
+[[hospitals]]
+name = "HospC"
+is_remote = false
+is_university = false
 """
 
 
@@ -88,3 +107,27 @@ class TestCalendarSmoke:
         y, m = get_default_month(date.today())
         assert editor._calendar.yearShown() == y
         assert editor._calendar.monthShown() == m
+
+
+class TestAddHospitalDropdown:
+    def test_set_hospitals_path(self, editor, tmp_path: Path) -> None:
+        h = tmp_path / "hospitals.toml"
+        h.write_text(SAMPLE_HOSPITALS_TOML, encoding="utf-8")
+        editor.set_hospitals_path(h)
+        assert editor._hospitals_path == h
+
+    def test_addable_excludes_existing(self, editor, tmp_path: Path) -> None:
+        """After loading specified-dates (has TestH), addable list excludes TestH."""
+        h = tmp_path / "hospitals.toml"
+        h.write_text(SAMPLE_HOSPITALS_TOML, encoding="utf-8")
+        editor.set_hospitals_path(h)
+
+        f = tmp_path / "s.toml"
+        f.write_text(MINIMAL_TOML, encoding="utf-8")
+        editor.open_path(f)
+
+        known = load_hospital_choices(h)
+        addable = get_addable_hospitals(known, set(editor._model.keys()))
+        assert "TestH" not in addable
+        assert "HospB" in addable
+        assert "HospC" in addable
