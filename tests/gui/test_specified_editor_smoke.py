@@ -4,13 +4,13 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-import tomlkit
 from PySide6.QtWidgets import QApplication, QCalendarWidget
 
 from src.gui.editors.specified_editor import (
     SpecifiedDatesEditorWindow,
     get_default_month,
 )
+from src.io.specified_days_loader import load_specified_days
 
 MINIMAL_TOML = """\
 [[hospitals]]
@@ -64,9 +64,10 @@ class TestSpecifiedEditorSmoke:
         editor.open_path(src)
         out = tmp_path / "out.toml"
         editor.save_to(out)
-        parsed = tomlkit.parse(out.read_text(encoding="utf-8"))
-        assert "hospitals" in parsed
-        assert str(parsed["hospitals"][0]["name"]) == "TestH"
+        data = load_specified_days(str(out))
+        assert "TestH" in data
+        assert 1 in data["TestH"]
+        assert 15 in data["TestH"]
 
 
 class TestCalendarSmoke:

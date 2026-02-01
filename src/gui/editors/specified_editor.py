@@ -1,17 +1,14 @@
-"""Specified-dates TOML editor -- model/TOML conversion + GUI window.
+"""Specified-dates TOML editor -- GUI window for specified-dates.toml.
 
-Conversion functions (load/dump) are pure Python and GUI-independent.
+Uses src/io/specified_days_loader and specified_days_writer for IO.
 GUI class (SpecifiedDatesEditorWindow) requires PySide6.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import cast
 
-import tomlkit
 from PySide6.QtCore import QDate, QRect, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import (
@@ -28,16 +25,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from tomlkit import aot, document, parse, table
 
-
-# ---------------------------------------------------------------------------
-# Model (dataclass)
-# ---------------------------------------------------------------------------
-@dataclass
-class HospitalEntry:
-    name: str
-    dates: set[int] = field(default_factory=set)
+from src.io.specified_days_loader import load_specified_days
+from src.io.specified_days_writer import dump_specified_days
 
 
 # ---------------------------------------------------------------------------
@@ -58,57 +48,6 @@ def is_in_displayed_month(
 ) -> bool:
     """Return True if the cell belongs to the displayed month."""
     return cell_year == display_year and cell_month == display_month
-
-
-# ---------------------------------------------------------------------------
-# tomlkit document helpers
-# ---------------------------------------------------------------------------
-def _ensure_hospitals(doc: tomlkit.TOMLDocument) -> tomlkit.items.AoT:
-    """doc 内に hospitals AoT がなければ作り、返す."""
-    if "hospitals" not in doc:
-        doc["hospitals"] = aot()
-    return cast(tomlkit.items.AoT, doc["hospitals"])
-
-
-def _entry_tbl_to_model(h: tomlkit.items.Table) -> HospitalEntry:
-    """tomlkit table -> HospitalEntry dataclass."""
-    name = str(h.get("name", "")).strip()
-    dates_list = h.get("dates", [])
-    dates_set = {int(x) for x in dates_list}
-    return HospitalEntry(name=name, dates=dates_set)
-
-
-def _apply_model_to_entry_tbl(
-    tbl: tomlkit.items.Table,
-    model: HospitalEntry,
-) -> None:
-    """HospitalEntry dataclass -> tomlkit table (in-place update)."""
-    tbl["name"] = model.name
-    tbl["dates"] = sorted(model.dates)
-
-
-# ---------------------------------------------------------------------------
-# Public file-level IO
-# ---------------------------------------------------------------------------
-def load_specified_dates(path: Path) -> list[HospitalEntry]:
-    """TOML file -> list[HospitalEntry]."""
-    text = path.read_text(encoding="utf-8-sig")
-    if not text.strip():
-        return []
-    doc = parse(text)
-    return [_entry_tbl_to_model(h) for h in doc.get("hospitals", [])]
-
-
-def dump_specified_dates(entries: list[HospitalEntry], path: Path) -> None:
-    """list[HospitalEntry] -> TOML file."""
-    doc = document()
-    hospitals_aot = aot()
-    for e in entries:
-        tbl = table()
-        _apply_model_to_entry_tbl(tbl, e)
-        hospitals_aot.append(tbl)
-    doc["hospitals"] = hospitals_aot
-    path.write_text(doc.as_string(), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -193,7 +132,7 @@ class SpecifiedDatesEditorWindow(QMainWindow):
         self.setWindowTitle("Specified Dates Editor")
         self.resize(900, 600)
         self.current_path: Path | None = None
-        self._entries: list[HospitalEntry] = []
+        self._model: dict[str, set[int]] = {}
 
         # -- left: hospital list --
         self.list_hosp = QListWidget()
@@ -262,7 +201,8 @@ class SpecifiedDatesEditorWindow(QMainWindow):
     def open_path(self, path: Path) -> None:
         """Load a TOML file and refresh the UI."""
         try:
-            self._entries = load_specified_dates(path)
+            raw = load_specified_days(str(path))
+            self._model = {name: set(days) for name, days in raw.items()}
             self.current_path = path
             self.setWindowTitle(f"Specified Dates Editor \u2014 {path.name}")
             self._refresh_hospital_list()
@@ -275,26 +215,30 @@ class SpecifiedDatesEditorWindow(QMainWindow):
             )
 
     def save_to(self, path: Path) -> None:
-        """Write entries to a TOML file."""
-        dump_specified_dates(self._entries, path)
+        """Write model to a TOML file."""
+        data = {name: sorted(days) for name, days in self._model.items()}
+        dump_specified_days(data, str(path))
         self.current_path = path
         self.setWindowTitle(f"Specified Dates Editor \u2014 {path.name}")
 
     # -- list refresh --
     def _refresh_hospital_list(self) -> None:
         self.list_hosp.clear()
-        for e in self._entries:
-            self.list_hosp.addItem(QListWidgetItem(e.name))
+        for name in self._model:
+            self.list_hosp.addItem(QListWidgetItem(name))
         if self.list_hosp.count() > 0 and self.list_hosp.currentRow() < 0:
             self.list_hosp.setCurrentRow(0)
         else:
             self._on_select_hospital(self.list_hosp.currentRow())
 
-    def _current_entry(self) -> HospitalEntry | None:
-        row = self.list_hosp.currentRow()
-        if row < 0 or row >= len(self._entries):
+    def _current_hospital_name(self) -> str | None:
+        item = self.list_hosp.currentItem()
+        if item is None:
             return None
-        return self._entries[row]
+        name = item.text()
+        if name not in self._model:
+            return None
+        return name
 
     def _on_select_hospital(self, _row: int) -> None:
         self._update_calendar_formats()
@@ -307,59 +251,60 @@ class SpecifiedDatesEditorWindow(QMainWindow):
         name = name.strip()
         if not name:
             return
-        if any(e.name == name for e in self._entries):
+        if name in self._model:
             QMessageBox.warning(
                 self,
                 "\u91cd\u8907",
                 "\u305d\u306e\u75c5\u9662\u540d\u306f\u65e2\u306b\u5b58\u5728\u3057\u307e\u3059\u3002",
             )
             return
-        self._entries.append(HospitalEntry(name=name))
+        self._model[name] = set()
         self._refresh_hospital_list()
-        self.list_hosp.setCurrentRow(len(self._entries) - 1)
+        self.list_hosp.setCurrentRow(len(self._model) - 1)
 
     def _del_hospital(self) -> None:
-        row = self.list_hosp.currentRow()
-        entry = self._current_entry()
-        if entry is None:
+        name = self._current_hospital_name()
+        if name is None:
             return
+        row = self.list_hosp.currentRow()
         ret = QMessageBox.question(
             self,
             "\u78ba\u8a8d",
-            f"'{entry.name}' \u3092\u524a\u9664\u3057\u307e\u3059\u304b?",
+            f"'{name}' \u3092\u524a\u9664\u3057\u307e\u3059\u304b?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
         if ret != QMessageBox.StandardButton.Yes:
             return
-        del self._entries[row]
+        del self._model[name]
         self._refresh_hospital_list()
-        if self._entries:
-            self.list_hosp.setCurrentRow(min(row, len(self._entries) - 1))
+        if self._model:
+            self.list_hosp.setCurrentRow(min(row, len(self._model) - 1))
         else:
             self._update_calendar_formats()
 
     # -- calendar --
     def _on_date_clicked(self, date: QDate) -> None:
-        entry = self._current_entry()
-        if entry is None:
+        name = self._current_hospital_name()
+        if name is None:
             return
         y = self._calendar.yearShown()
         m = self._calendar.monthShown()
         if date.year() != y or date.month() != m:
             return
         day = date.day()
-        if day in entry.dates:
-            entry.dates.remove(day)
+        dates = self._model[name]
+        if day in dates:
+            dates.remove(day)
         else:
-            entry.dates.add(day)
+            dates.add(day)
         self._update_calendar_formats()
 
     def _on_page_changed(self, _year: int, _month: int) -> None:
         self._update_calendar_formats()
 
     def _update_calendar_formats(self) -> None:
-        entry = self._current_entry()
-        days = entry.dates if entry is not None else set()
+        name = self._current_hospital_name()
+        days = self._model[name] if name is not None else set()
         self._calendar.set_highlight_dates(days)
 
     # -- file operations --
