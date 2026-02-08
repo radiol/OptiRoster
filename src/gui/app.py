@@ -8,12 +8,16 @@ __all__ = ["MainWindow", "main"]
 def main() -> None:
     import sys
 
+    from PySide6.QtGui import QIcon
     from PySide6.QtWidgets import QApplication
 
     from src.gui.common.ensure_config import ensure_default_files
     from src.gui.common.paths import Paths
 
     app = QApplication(sys.argv)
+    icon_path = "img/icon.png"
+    app.setWindowIcon(QIcon(icon_path))
+
     paths = Paths.from_file(__file__)
     ensure_default_files(paths)
     w = MainWindow()
