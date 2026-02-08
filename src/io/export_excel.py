@@ -94,7 +94,10 @@ def export_schedule_to_excel(
 
         if is_holiday_or_weekend(d):  # -> bool を返すよう定義側も注釈
             for col in range(1, 3 + len(hospital_names)):
-                ws.cell(row=i, column=col).fill = holiday_fill
+                c = ws.cell(row=i, column=col)
+                # 人員不足(赤)は休日(黄)より優先
+                if c.fill != shortage_fill:
+                    c.fill = holiday_fill
 
         for col in range(1, 3 + len(hospital_names)):
             ws.cell(row=i, column=col).border = border
