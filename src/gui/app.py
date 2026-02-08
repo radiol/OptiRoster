@@ -9,8 +9,12 @@ def main() -> None:
     import sys
 
     from PySide6.QtWidgets import QApplication
+    from PySide6.QtGui import QIcon
 
     app = QApplication(sys.argv)
+    icon_path = "img/icon.png"
+    app.setWindowIcon(QIcon(icon_path))
+
     w = MainWindow()
     w.show()
     sys.exit(app.exec())
