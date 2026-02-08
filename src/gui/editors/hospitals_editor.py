@@ -196,7 +196,9 @@ class HospitalDialog(QDialog):
         self.shift_table.setHorizontalHeaderLabels(["shift_type", "weekdays", "frequency"])
         self.shift_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.shift_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        self.shift_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.shift_table.horizontalHeader().setStretchLastSection(True)
+        self.shift_table.itemDoubleClicked.connect(lambda _: self._edit_shift())
 
         btn_shift_add = QPushButton("シフト新規追加")
         btn_shift_edit = QPushButton("シフト編集")
