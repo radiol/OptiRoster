@@ -369,7 +369,9 @@ class HospitalsEditorWindow(QMainWindow):
         self._shift_table.setHorizontalHeaderLabels(["shift_type", "weekdays", "frequency"])
         self._shift_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self._shift_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        self._shift_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._shift_table.horizontalHeader().setStretchLastSection(True)
+        self._shift_table.itemDoubleClicked.connect(lambda _: self._edit_shift_detail())
 
         # -- toolbar --
         btn_open = QPushButton("Open")
@@ -474,6 +476,34 @@ class HospitalsEditorWindow(QMainWindow):
                 r, 1, QTableWidgetItem(",".join(wd.value for wd in s.weekdays))
             )
             self._shift_table.setItem(r, 2, QTableWidgetItem(s.frequency.value))
+
+    def _edit_shift_detail(self) -> None:
+        """Edit a shift directly from the detail view."""
+        hosp_row = self.list_hosp.currentRow()
+        hosps = self._hospitals()
+        if hosp_row < 0 or hosp_row >= len(hosps):
+            return
+
+        items = self._shift_table.selectedItems()
+        if not items:
+            QMessageBox.information(self, "Info", "編集するシフトを選択してください。")
+            return
+        shift_row = items[0].row()
+
+        model = _hosp_tbl_to_model(hosps[hosp_row])
+        if shift_row < 0 or shift_row >= len(model.demand_rules):
+            return
+
+        current_shift = model.demand_rules[shift_row]
+        dlg = ShiftDialog(self, current_shift)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        # Update the shift in the model and apply back to tomlkit
+        new_shift = dlg.get_model()
+        model.demand_rules[shift_row] = new_shift
+        _apply_model_to_hosp_tbl(hosps[hosp_row], model)
+        self._on_select_hospital(hosp_row)
 
     # -- CRUD --
     def _add_hospital(self) -> None:
