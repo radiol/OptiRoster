@@ -311,10 +311,10 @@ import json
 
 def generate_schedule_api(config_data):
     # Write temporary config files
+    # Year/month are auto-detected from preferences CSV header
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as prefs:
         # Write preferences CSV
         result = build_and_solve(
-            year=2025, month=10,
             preferences_path=prefs.name,
             json_out=True
         )

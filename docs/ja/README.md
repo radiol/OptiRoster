@@ -97,11 +97,12 @@ graph LR
 
 ```bash
 uv run -m src.cli.main \
-  --year 2025 --month 10 \
   --specified-days data/specified-2025-10.toml \
   --preferences data/2025-10.csv \
   --xlsx output/schedule-2025-10.xlsx
 ```
+
+> **注意**: 対象年月は勤務希望CSVのヘッダーから自動的に判定されます。
 
 ### 設定ファイル例
 

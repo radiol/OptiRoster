@@ -22,11 +22,12 @@ uv sync
 
 ```bash
 uv run -m src.cli.main \
-  --year 2025 --month 10 \
   --specified-days data/specified-2025-10.toml \
   --preferences data/2025-10.csv \
   --xlsx output/schedule-2025-10.xlsx
 ```
+
+> **Note**: The target year and month are automatically detected from the preferences CSV header.
 
 ## Configuration Files
 
@@ -153,10 +154,8 @@ Dr. Johnson,Remote Clinic,10
 
 ### Required Arguments
 
-- `--year YYYY`: Target year for schedule generation
-- `--month MM`: Target month (1-12)
 - `--specified-days PATH`: Path to specified days TOML file
-- `--preferences PATH`: Path to preferences CSV file
+- `--preferences PATH`: Path to preferences CSV file (target year/month auto-detected from header)
 
 ### Optional Arguments
 
@@ -172,7 +171,6 @@ Dr. Johnson,Remote Clinic,10
 
 ```bash
 uv run -m src.cli.main \
-  --year 2025 --month 10 \
   --specified-days data/specified-2025-10.toml \
   --preferences data/2025-10.csv
 ```
@@ -181,7 +179,6 @@ uv run -m src.cli.main \
 
 ```bash
 uv run -m src.cli.main \
-  --year 2025 --month 10 \
   --specified-days data/specified-2025-10.toml \
   --preferences data/2025-10.csv \
   --xlsx schedules/october-2025.xlsx
@@ -191,7 +188,6 @@ uv run -m src.cli.main \
 
 ```bash
 uv run -m src.cli.main \
-  --year 2025 --month 10 \
   --specified-days data/specified-2025-10.toml \
   --preferences data/2025-10.csv \
   --json > results.json
@@ -366,7 +362,6 @@ Process multiple months:
 ```bash
 for month in {1..12}; do
   uv run -m src.cli.main \
-    --year 2025 --month $month \
     --specified-days data/specified-2025-$(printf "%02d" $month).toml \
     --preferences data/2025-$(printf "%02d" $month).csv \
     --xlsx output/schedule-2025-$(printf "%02d" $month).xlsx
@@ -383,7 +378,6 @@ import subprocess
 
 result = subprocess.run([
     "uv", "run", "-m", "src.cli.main",
-    "--year", "2025", "--month", "10",
     "--specified-days", "data/specified-2025-10.toml",
     "--preferences", "data/2025-10.csv",
     "--json"
