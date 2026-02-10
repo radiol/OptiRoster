@@ -311,10 +311,10 @@ import json
 
 def generate_schedule_api(config_data):
     # 一時設定ファイルを書き込み
+    # 年・月は勤務希望CSVのヘッダーから自動判定
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as prefs:
         # 希望CSVを書き込み
         result = build_and_solve(
-            year=2025, month=10,
             preferences_path=prefs.name,
             json_out=True
         )

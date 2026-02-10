@@ -22,11 +22,12 @@ uv sync
 
 ```bash
 uv run -m src.cli.main \
-  --year 2025 --month 10 \
   --specified-days data/specified-2025-10.toml \
   --preferences data/2025-10.csv \
   --xlsx output/schedule-2025-10.xlsx
 ```
+
+> **注意**: 対象年月は勤務希望CSVのヘッダーから自動的に判定されます。
 
 ## 設定ファイル
 
@@ -153,10 +154,8 @@ worker,hospital,max_assignments
 
 ### 必須引数
 
-- `--year YYYY`: スケジュール生成の対象年
-- `--month MM`: 対象月 (1-12)
 - `--specified-days PATH`: 指定日TOMLファイルへのパス
-- `--preferences PATH`: 希望CSVファイルへのパス
+- `--preferences PATH`: 希望CSVファイルへのパス(対象年月はヘッダーから自動判定)
 
 ### オプション引数
 
@@ -172,7 +171,6 @@ worker,hospital,max_assignments
 
 ```bash
 uv run -m src.cli.main \
-  --year 2025 --month 10 \
   --specified-days data/specified-2025-10.toml \
   --preferences data/2025-10.csv
 ```
@@ -181,7 +179,6 @@ uv run -m src.cli.main \
 
 ```bash
 uv run -m src.cli.main \
-  --year 2025 --month 10 \
   --specified-days data/specified-2025-10.toml \
   --preferences data/2025-10.csv \
   --xlsx schedules/october-2025.xlsx
@@ -191,7 +188,6 @@ uv run -m src.cli.main \
 
 ```bash
 uv run -m src.cli.main \
-  --year 2025 --month 10 \
   --specified-days data/specified-2025-10.toml \
   --preferences data/2025-10.csv \
   --json > results.json
@@ -366,7 +362,6 @@ register(CustomRule())
 ```bash
 for month in {1..12}; do
   uv run -m src.cli.main \
-    --year 2025 --month $month \
     --specified-days data/specified-2025-$(printf "%02d" $month).toml \
     --preferences data/2025-$(printf "%02d" $month).csv \
     --xlsx output/schedule-2025-$(printf "%02d" $month).xlsx
@@ -383,7 +378,6 @@ import subprocess
 
 result = subprocess.run([
     "uv", "run", "-m", "src.cli.main",
-    "--year", "2025", "--month", "10",
     "--specified-days", "data/specified-2025-10.toml",
     "--preferences", "data/2025-10.csv",
     "--json"
