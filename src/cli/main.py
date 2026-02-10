@@ -36,8 +36,6 @@ DEFAULT_MAX_ASSIGNMENTS_CSV = DATA_DIR / "max-assignments.csv"
 
 
 def build_and_solve(
-    year: int,
-    month: int,
     hospitals_path: pathlib.Path | str,
     workers_path: pathlib.Path | str,
     specified_days_path: pathlib.Path | str,
@@ -52,6 +50,14 @@ def build_and_solve(
     specified_days = load_specified_days(str(specified_days_path))
     preferences = load_preferences_csv(str(preferences_path))
     max_assignments = load_max_assignments_csv(str(max_assignments_path))
+
+    # 年・月を preferences CSV のヘッダーから取得 (GUI と同様)
+    if not preferences:
+        raise SystemExit("勤務希望CSVにデータが見つかりません。")
+    first_date = next(iter(preferences.keys()))[1]
+    year = first_date.year
+    month = first_date.month
+
     days = generate_monthly_dates(year, month)
 
     # 2) 変数生成
@@ -150,8 +156,6 @@ def main() -> None:
     )
 
     # Required arguments with short options
-    ap.add_argument("-y", "--year", type=int, required=True, help="対象年 (例: 2025)")
-    ap.add_argument("-m", "--month", type=int, required=True, help="対象月 (1-12)")
     ap.add_argument(
         "-s",
         "--specified-days",
@@ -196,8 +200,6 @@ def main() -> None:
     args = ap.parse_args()
 
     build_and_solve(
-        args.year,
-        args.month,
         args.hospitals,
         args.workers,
         args.specified_days,
