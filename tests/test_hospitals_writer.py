@@ -63,7 +63,7 @@ class TestDumpLoadRoundTrip:
     def test_roundtrip_preserves_all_fields(self, tmp_path) -> None:
         original = [
             Hospital(
-                name="大学",
+                name="病院X",
                 is_remote=False,
                 is_university=True,
                 demand_rules=[
@@ -83,7 +83,7 @@ class TestDumpLoadRoundTrip:
                 ],
             ),
             Hospital(
-                name="鳥日赤",
+                name="病院Y",
                 is_remote=True,
                 is_university=False,
                 demand_rules=[

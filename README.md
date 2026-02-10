@@ -112,17 +112,17 @@ GUIは **メインタブ** と **設定タブ** の2つのタブで構成され�
 
 ##### 毎月変更する設定
 
-| ボタン | エディタ | 対象ファイル |
-|--------|----------|--------------|
+| ボタン                                         | エディタ       | 対象ファイル                |
+| ---------------------------------------------- | -------------- | --------------------------- |
 | 病院別勤務希望日 (specified-dates.toml) を編集 | 指定日エディタ | `data/specified-dates.toml` |
-| 勤務回数上限 (max-assignments.csv) を編集 | CSVエディタ | `data/max-assignments.csv` |
+| 勤務回数上限 (max-assignments.csv) を編集      | CSVエディタ    | `data/max-assignments.csv`  |
 
 ##### 人事異動などがあった際に編集する設定
 
-| ボタン | エディタ | 対象ファイル |
-|--------|----------|--------------|
-| 病院設定 (hospitals.toml) を編集 | 病院エディタ | `config/hospitals.toml` |
-| 勤務者設定 (workers.toml) を編集 | 勤務者エディタ | `config/workers.toml` |
+| ボタン                           | エディタ       | 対象ファイル            |
+| -------------------------------- | -------------- | ----------------------- |
+| 病院設定 (hospitals.toml) を編集 | 病院エディタ   | `config/hospitals.toml` |
+| 勤務者設定 (workers.toml) を編集 | 勤務者エディタ | `config/workers.toml`   |
 
 ---
 
@@ -200,12 +200,12 @@ GUIは **メインタブ** と **設定タブ** の2つのタブで構成され�
 
 GUIを使用する前に、以下のファイルが適切に配置されている必要があります:
 
-| ファイル | 説明 | 編集頻度 |
-|----------|------|----------|
-| `config/hospitals.toml` | 病院設定（名前、フラグ、シフト定義） | 人事異動時 |
-| `config/workers.toml` | 勤務者設定（名前、専門医、担当病院） | 人事異動時 |
-| `data/specified-dates.toml` | 病院別の指定日 | 毎月 |
-| `data/max-assignments.csv` | 勤務者×病院の最大勤務回数 | 毎月 |
+| ファイル                    | 説明                                 | 編集頻度   |
+| --------------------------- | ------------------------------------ | ---------- |
+| `config/hospitals.toml`     | 病院設定（名前、フラグ、シフト定義） | 人事異動時 |
+| `config/workers.toml`       | 勤務者設定（名前、専門医、担当病院） | 人事異動時 |
+| `data/specified-dates.toml` | 病院別の指定日                       | 毎月       |
+| `data/max-assignments.csv`  | 勤務者×病院の最大勤務回数            | 毎月       |
 
 > [!NOTE]
 > 対象月ごとにファイルを分けたい場合は、`data/specified-dates.toml` をコピー・リネームして編集した後、GUI用には最新の内容を `data/specified-dates.toml` に戻してください。
@@ -280,7 +280,7 @@ uv run -m src.cli.main \
 
 ```toml
 [[hospitals]]
-name = "大学"
+name = "病院X"
 is_remote = false
 is_university = true
 
@@ -290,7 +290,7 @@ weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"
 frequency = "毎週"
 
 [[hospitals]]
-name = "鳥日赤"
+name = "病院Y"
 is_remote = true
 is_university = false
 
@@ -305,14 +305,14 @@ weekdays = ["木曜"]
 frequency = "隔週"
 ```
 
-| フィールド | 型 | 説明 |
-|-----------|-----|------|
-| `name` | 文字列 | 病院名 |
-| `is_remote` | 真偽値 | 遠隔地の場合 `true` |
-| `is_university` | 真偽値 | 大学病院の場合 `true` |
-| `shifts[].shift_type` | 文字列 | `AM`, `PM`, `日勤`, `当直` のいずれか |
-| `shifts[].weekdays` | 文字列配列 | `月曜` ~ `日曜` から選択 |
-| `shifts[].frequency` | 文字列 | `毎週`, `隔週`, `指定日` のいずれか |
+| フィールド            | 型         | 説明                                  |
+| --------------------- | ---------- | ------------------------------------- |
+| `name`                | 文字列     | 病院名                                |
+| `is_remote`           | 真偽値     | 遠隔地の場合 `true`                   |
+| `is_university`       | 真偽値     | 大学病院の場合 `true`                 |
+| `shifts[].shift_type` | 文字列     | `AM`, `PM`, `日勤`, `当直` のいずれか |
+| `shifts[].weekdays`   | 文字列配列 | `月曜` ~ `日曜` から選択              |
+| `shifts[].frequency`  | 文字列     | `毎週`, `隔週`, `指定日` のいずれか   |
 
 ### workers.toml
 
@@ -320,36 +320,36 @@ frequency = "隔週"
 
 ```toml
 [[workers]]
-name = "藤井"
+name = "勤務者A"
 is_diagnostic_specialist = true
 
 [[workers.assignments]]
-hospital = "労災"
+hospital = "病院X"
 weekdays = ["金曜"]
 shift_type = "日勤"
 
 [[workers.assignments]]
-hospital = "米医療"
+hospital = "病院Y"
 weekdays = ["木曜"]
 shift_type = "AM"
 
 [[workers]]
-name = "北尾"
+name = "勤務者B"
 is_diagnostic_specialist = true
 
 [[workers.assignments]]
-hospital = "大学"
+hospital = "病院Z"
 weekdays = ["月曜", "火曜", "水曜", "木曜", "金曜", "土曜", "日曜"]
 shift_type = "当直"
 ```
 
-| フィールド | 型 | 説明 |
-|-----------|-----|------|
-| `name` | 文字列 | 勤務者名 |
-| `is_diagnostic_specialist` | 真偽値 | 診断専門医の場合 `true` |
-| `assignments[].hospital` | 文字列 | 担当病院名 |
-| `assignments[].weekdays` | 文字列配列 | 担当曜日（`月曜` ~ `日曜`） |
-| `assignments[].shift_type` | 文字列 | `AM`, `PM`, `日勤`, `当直` のいずれか |
+| フィールド                 | 型         | 説明                                  |
+| -------------------------- | ---------- | ------------------------------------- |
+| `name`                     | 文字列     | 勤務者名                              |
+| `is_diagnostic_specialist` | 真偽値     | 診断専門医の場合 `true`               |
+| `assignments[].hospital`   | 文字列     | 担当病院名                            |
+| `assignments[].weekdays`   | 文字列配列 | 担当曜日（`月曜` ~ `日曜`）           |
+| `assignments[].shift_type` | 文字列     | `AM`, `PM`, `日勤`, `当直` のいずれか |
 
 ### specified-dates.toml
 
@@ -357,18 +357,18 @@ shift_type = "当直"
 
 ```toml
 [[hospitals]]
-name = "松日赤-治療"
+name = "病院X"
 dates = [12, 26]
 
 [[hospitals]]
-name = "安医"
+name = "病院Y"
 dates = [5, 19]
 ```
 
-| フィールド | 型 | 説明 |
-|-----------|-----|------|
-| `name` | 文字列 | 病院名 |
-| `dates` | 整数配列 | 指定日の日付番号（1~31） |
+| フィールド | 型       | 説明                     |
+| ---------- | -------- | ------------------------ |
+| `name`     | 文字列   | 病院名                   |
+| `dates`    | 整数配列 | 指定日の日付番号（1~31） |
 
 ### max-assignments.csv
 
