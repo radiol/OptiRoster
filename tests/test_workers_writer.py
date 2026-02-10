@@ -71,11 +71,11 @@ class TestDumpLoadRoundTrip:
     def test_roundtrip_preserves_all_fields(self, tmp_path) -> None:
         original = [
             Worker(
-                name="北尾",
+                name="John",
                 is_diagnostic_specialist=True,
                 assignments=[
                     WorkerAssignmentRule(
-                        hospital="大学",
+                        hospital="病院X",
                         weekdays=[
                             Weekday.MONDAY,
                             Weekday.TUESDAY,
@@ -88,14 +88,14 @@ class TestDumpLoadRoundTrip:
                         shift_type=ShiftType.NIGHT,
                     ),
                     WorkerAssignmentRule(
-                        hospital="鳥市立",
+                        hospital="病院Y",
                         weekdays=[Weekday.FRIDAY],
                         shift_type=ShiftType.DAY,
                     ),
                 ],
             ),
             Worker(
-                name="川口",
+                name="Jane",
                 is_diagnostic_specialist=False,
                 assignments=[],
             ),
