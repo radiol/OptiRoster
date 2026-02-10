@@ -221,7 +221,6 @@ GUIを使用する前に、以下のファイルが適切に配置されてい�
 
 ```bash
 uv run -m src.cli.main \
-  -y 2025 -m 10 \
   -s data/specified-2025-10.toml \
   -p data/2025-10.csv \
   -a data/max-assignments.csv \
@@ -232,21 +231,20 @@ uv run -m src.cli.main \
 
 ```bash
 uv run -m src.cli.main \
-  --year 2025 --month 10 \
   --specified-days data/specified-2025-10.toml \
   --preferences data/2025-10.csv \
   --max-assignments-csv data/max-assignments.csv \
   --xlsx output.xlsx
 ```
 
+> **注意**: 対象年月は勤務希望CSVのヘッダーから自動的に判定されます。
+
 #### 利用可能な短縮オプション
 
 **必須引数:**
 
-- `-y, --year` : 対象年
-- `-m, --month` : 対象月
 - `-s, --specified-days` : 病院の勤務指定日TOMLファイル
-- `-p, --preferences` : 勤務希望CSVファイル
+- `-p, --preferences` : 勤務希望CSVファイル(対象年月はヘッダーから自動判定)
 
 **オプション引数:**
 
@@ -258,11 +256,10 @@ uv run -m src.cli.main \
 
 #### 毎月変更する部分
 
-- `-y`/`--year` と `-m`/`--month` を対象年月に変更してください。
 - `-s`/`--specified-days` を当該月の指定日ファイルに変更してください。
-  （例: `data/specified-2025-11.toml`）
+  (例: `data/specified-2025-11.toml`)
 - `-p`/`--preferences` を当該月の勤務希望 CSV に変更してください。
-  （Google Form からダウンロードした CSV をそのまま利用可）
+  (Google Form からダウンロードした CSV をそのまま利用可。対象年月はCSVヘッダーから自動判定)
 - `-a`/`--max-assignments-csv` を当該月の設定に合わせて編集してください。
 
 #### 変更不要な部分
