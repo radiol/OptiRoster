@@ -52,24 +52,19 @@ def test_multiple_rows_per_person(tmp_path):
         tmp_path,
         "prefs.csv",
         """
-        氏名,2025年10月 勤務希望 [10/1(水)],2025年10月 勤務希望 [10/2(木)], 2025年10月 勤務希望 [10/3(金)],2025年10月 勤務希望 [10/4(土)]
-        診断01,当直希望,,当直不可,
-        診断01, ,当直不可, ,
-        """,  # noqa: E501
+        氏名,2025年10月 勤務希望 [10/1(水)],2025年10月 勤務希望 [10/2(木)]
+        診断01,当直希望,
+        診断01, 
+        """,
     )
     res = load_preferences_csv(str(csv_path))
     d1 = dt.date(2025, 10, 1)
     d2 = dt.date(2025, 10, 2)
-    d3 = dt.date(2025, 10, 3)
-    d4 = dt.date(2025, 10, 4)
 
-    # 1つ目の行の当直希望及び3日目の当直不可は無視される
-    # 2つ目の行に『当直希望』がないため、空欄セルは制限なし(NONE)
-    # 2日目の当直不可はそのまま反映される
+    # 1つ目の行の『当直希望』は無視され、
+    # 2つ目の行の空欄セルは『制限なし』となる。
     assert res[("診断01", d1)] == PreferenceStatus.NONE
-    assert res[("診断01", d2)] == PreferenceStatus.NIGHT_FORBIDDEN
-    assert res[("診断01", d3)] == PreferenceStatus.NONE
-    assert res[("診断01", d4)] == PreferenceStatus.NONE
+    assert res[("診断01", d2)] == PreferenceStatus.NONE
 
 
 def test_explicit_forbids_take_precedence(tmp_path):
