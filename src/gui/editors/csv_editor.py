@@ -8,6 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
@@ -83,6 +84,7 @@ class CsvEditorWindow(QMainWindow):
         btn_add_col.clicked.connect(self._on_add_column)
         btn_del_col.clicked.connect(self._on_delete_column)
 
+        self._table.currentCellChanged.connect(self._on_cell_changed)
         self._install_key_filter()
 
     # --- public API ---
@@ -236,6 +238,71 @@ class CsvEditorWindow(QMainWindow):
         if col <= 0:
             return
         self._table.removeColumn(col)
+
+    _DEFAULT_BRUSH = QBrush()
+    _LIGHT_HIGHLIGHT = QBrush(QColor(220, 235, 255))
+    _DARK_HIGHLIGHT = QBrush(QColor(40, 60, 90))
+
+    def _highlight_brush(self) -> QBrush:
+        """現在のテーマに応じたハイライト色を返す."""
+        from PySide6.QtGui import QPalette
+
+        bg = self.palette().color(QPalette.ColorRole.Window)
+        if bg.lightness() < 128:
+            return self._DARK_HIGHLIGHT
+        return self._LIGHT_HIGHLIGHT
+
+    def _on_cell_changed(self, row: int, col: int, prev_row: int, prev_col: int) -> None:
+        """選択セル変更時にステータスバー更新と十字ハイライトを適用する."""
+        self._update_status_bar(row, col)
+        self._update_cross_highlight(row, col, prev_row, prev_col)
+
+    def _update_status_bar(self, row: int, col: int) -> None:
+        worker = ""
+        hospital = ""
+        if row >= 0:
+            name_item = self._table.item(row, 0)
+            worker = name_item.text() if name_item else ""
+        if col >= 1:
+            header = self._table.horizontalHeaderItem(col)
+            hospital = header.text() if header else ""
+
+        if worker and hospital:
+            self.statusBar().showMessage(f"勤務者: {worker} / 病院: {hospital}")
+        elif worker:
+            self.statusBar().showMessage(f"勤務者: {worker}")
+        else:
+            self.statusBar().clearMessage()
+
+    def _update_cross_highlight(self, row: int, col: int, prev_row: int, prev_col: int) -> None:
+        rows = self._table.rowCount()
+        cols = self._table.columnCount()
+        default = self._DEFAULT_BRUSH
+        highlight = self._highlight_brush()
+
+        # 前回のハイライトをクリア
+        if prev_row >= 0:
+            for c in range(cols):
+                item = self._table.item(prev_row, c)
+                if item:
+                    item.setBackground(default)
+        if prev_col >= 0:
+            for r in range(rows):
+                item = self._table.item(r, prev_col)
+                if item:
+                    item.setBackground(default)
+
+        # 新しい十字ハイライトを適用
+        if row >= 0:
+            for c in range(cols):
+                item = self._table.item(row, c)
+                if item:
+                    item.setBackground(highlight)
+        if col >= 0:
+            for r in range(rows):
+                item = self._table.item(r, col)
+                if item:
+                    item.setBackground(highlight)
 
     def _install_key_filter(self) -> None:
         """Delete / Backspace でセルクリアを有効にする."""
