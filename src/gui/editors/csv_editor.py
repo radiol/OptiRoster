@@ -10,11 +10,9 @@ from pathlib import Path
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
-    QFileDialog,
     QFrame,
     QHBoxLayout,
     QInputDialog,
-    QMainWindow,
     QMessageBox,
     QPushButton,
     QTableWidget,
@@ -23,18 +21,20 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from src.gui.common.base_editor import BaseEditorWindow
 from src.io.max_assignments_loader import load_max_assignments_csv
 from src.io.max_assignments_writer import dump_max_assignments_csv
 
 
-class CsvEditorWindow(QMainWindow):
+class CsvEditorWindow(BaseEditorWindow):
     """max-assignments.csv を QTableWidget で編集するウィンドウ."""
+
+    _file_filter = "CSV (*.csv)"
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("CSV Editor")
         self.resize(900, 600)
-        self.current_path: Path | None = None
 
         self._table = QTableWidget()
 
@@ -173,32 +173,6 @@ class CsvEditorWindow(QMainWindow):
         return data
 
     # --- private ---
-    def _on_open(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Open CSV", "", "CSV (*.csv)")
-        if path:
-            self.open_path(Path(path))
-
-    def _on_save(self) -> None:
-        if self.current_path is None:
-            self._on_save_as()
-            return
-        self.save_to(self.current_path)
-        QMessageBox.information(
-            self,
-            "\u4fdd\u5b58\u5b8c\u4e86",
-            f"{self.current_path.name} \u3092\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002",
-        )
-
-    def _on_save_as(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(self, "Save As", "", "CSV (*.csv)")
-        if path:
-            self.save_to(Path(path))
-            QMessageBox.information(
-                self,
-                "\u4fdd\u5b58\u5b8c\u4e86",
-                f"{Path(path).name} \u3092\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002",
-            )
-
     def _on_add_row(self) -> None:
         """入力ダイアログで名前を受け取り, 選択行の下に挿入する. 未選択なら末尾."""
         name, ok = QInputDialog.getText(self, "行追加", "名前:")

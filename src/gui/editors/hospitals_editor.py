@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
-    QFileDialog,
     QFormLayout,
     QGridLayout,
     QGroupBox,
@@ -23,7 +22,6 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
-    QMainWindow,
     QMessageBox,
     QPushButton,
     QTableWidget,
@@ -34,6 +32,7 @@ from PySide6.QtWidgets import (
 from tomlkit import aot, document, parse, table
 
 from src.domain.types import Frequency, Hospital, HospitalDemandRule, ShiftType, Weekday
+from src.gui.common.base_editor import BaseEditorWindow
 
 # ---------------------------------------------------------------------------
 # Constants (derived from domain enums)
@@ -325,14 +324,15 @@ class HospitalDialog(QDialog):
 # ---------------------------------------------------------------------------
 # Main editor window
 # ---------------------------------------------------------------------------
-class HospitalsEditorWindow(QMainWindow):
+class HospitalsEditorWindow(BaseEditorWindow):
     """hospitals.toml GUI editor -- list + detail + dialogs."""
+
+    _file_filter = "TOML (*.toml)"
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Hospitals Editor")
         self.resize(1100, 650)
-        self.current_path: Path | None = None
         self.doc: tomlkit.TOMLDocument = document()
 
         # -- left: hospital list --
@@ -563,22 +563,3 @@ class HospitalsEditorWindow(QMainWindow):
         row = self.list_hosp.currentRow()
         if 0 <= row < len(self._hospitals()) - 1:
             self._swap_hospitals(row, row + 1)
-
-    # -- file operations --
-    def _on_open(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Open TOML", "", "TOML (*.toml)")
-        if path:
-            self.open_path(Path(path))
-
-    def _on_save(self) -> None:
-        if self.current_path is None:
-            self._on_save_as()
-            return
-        self.save_to(self.current_path)
-        QMessageBox.information(self, "保存完了", f"{self.current_path.name} を保存しました。")
-
-    def _on_save_as(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(self, "Save As", "", "TOML (*.toml)")
-        if path:
-            self.save_to(Path(path))
-            QMessageBox.information(self, "保存完了", f"{Path(path).name} を保存しました。")

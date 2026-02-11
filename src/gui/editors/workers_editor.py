@@ -12,7 +12,6 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
-    QFileDialog,
     QFormLayout,
     QGridLayout,
     QGroupBox,
@@ -20,7 +19,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QListWidget,
-    QMainWindow,
     QMessageBox,
     QPushButton,
     QSplitter,
@@ -29,6 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 from src.domain.types import ShiftType, Weekday, Worker, WorkerAssignmentRule
+from src.gui.common.base_editor import BaseEditorWindow
 from src.gui.editors.hospitals_editor import SHIFT_TYPES, WEEKDAYS
 from src.io.hospitals_loader import load_hospitals
 from src.io.workers_loader import load_workers
@@ -155,14 +154,15 @@ class AssignmentDialog(QDialog):
 # ---------------------------------------------------------------------------
 # GUI
 # ---------------------------------------------------------------------------
-class WorkersEditorWindow(QMainWindow):
+class WorkersEditorWindow(BaseEditorWindow):
     """workers.toml editor window (worker list + detail form with assignment list)."""
+
+    _file_filter = "TOML (*.toml)"
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Workers Editor")
         self.resize(900, 600)
-        self.current_path: Path | None = None
         self._model: list[Worker] = []
         self._current_index: int = -1
         self._hospitals_path: Path | None = None
@@ -384,22 +384,3 @@ class WorkersEditorWindow(QMainWindow):
             return
         w.assignments.pop(arow)
         self._assignments_list.takeItem(arow)
-
-    # --- private: file operation slots ---
-    def _on_open(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Open TOML", "", "TOML (*.toml)")
-        if path:
-            self.open_path(Path(path))
-
-    def _on_save(self) -> None:
-        if self.current_path is None:
-            self._on_save_as()
-            return
-        self.save_to(self.current_path)
-        QMessageBox.information(self, "保存完了", f"{self.current_path.name} を保存しました。")
-
-    def _on_save_as(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(self, "Save As", "", "TOML (*.toml)")
-        if path:
-            self.save_to(Path(path))
-            QMessageBox.information(self, "保存完了", f"{Path(path).name} を保存しました。")
