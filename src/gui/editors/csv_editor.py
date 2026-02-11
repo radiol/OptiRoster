@@ -10,7 +10,9 @@ from pathlib import Path
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFileDialog,
+    QFrame,
     QHBoxLayout,
+    QInputDialog,
     QMainWindow,
     QMessageBox,
     QPushButton,
@@ -42,6 +44,27 @@ class CsvEditorWindow(QMainWindow):
         toolbar.addWidget(btn_open)
         toolbar.addWidget(btn_save)
         toolbar.addWidget(btn_save_as)
+
+        sep1 = QFrame()
+        sep1.setFrameShape(QFrame.Shape.VLine)
+        sep1.setFrameShadow(QFrame.Shadow.Sunken)
+        toolbar.addWidget(sep1)
+
+        btn_add_row = QPushButton("行追加")
+        btn_del_row = QPushButton("行削除")
+        toolbar.addWidget(btn_add_row)
+        toolbar.addWidget(btn_del_row)
+
+        sep2 = QFrame()
+        sep2.setFrameShape(QFrame.Shape.VLine)
+        sep2.setFrameShadow(QFrame.Shadow.Sunken)
+        toolbar.addWidget(sep2)
+
+        btn_add_col = QPushButton("列追加")
+        btn_del_col = QPushButton("列削除")
+        toolbar.addWidget(btn_add_col)
+        toolbar.addWidget(btn_del_col)
+
         toolbar.addStretch()
 
         layout = QVBoxLayout()
@@ -55,6 +78,10 @@ class CsvEditorWindow(QMainWindow):
         btn_open.clicked.connect(self._on_open)
         btn_save.clicked.connect(self._on_save)
         btn_save_as.clicked.connect(self._on_save_as)
+        btn_add_row.clicked.connect(self._on_add_row)
+        btn_del_row.clicked.connect(self._on_delete_row)
+        btn_add_col.clicked.connect(self._on_add_column)
+        btn_del_col.clicked.connect(self._on_delete_column)
 
         self._install_key_filter()
 
@@ -167,6 +194,40 @@ class CsvEditorWindow(QMainWindow):
                 "\u4fdd\u5b58\u5b8c\u4e86",
                 f"{Path(path).name} \u3092\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002",
             )
+
+    def _on_add_row(self) -> None:
+        """選択行の下に空行を挿入する. 未選択なら末尾に追加."""
+        row = self._table.currentRow()
+        pos = row + 1 if row >= 0 else self._table.rowCount()
+        self._table.insertRow(pos)
+        for c in range(self._table.columnCount()):
+            self._table.setItem(pos, c, QTableWidgetItem(""))
+        self._table.setCurrentCell(pos, 0)
+
+    def _on_delete_row(self) -> None:
+        """選択行を削除する."""
+        row = self._table.currentRow()
+        if row < 0:
+            return
+        self._table.removeRow(row)
+
+    def _on_add_column(self) -> None:
+        """入力ダイアログで病院名を受け取り, 末尾列に追加する."""
+        name, ok = QInputDialog.getText(self, "列追加", "列名:")
+        if not ok or not name.strip():
+            return
+        col = self._table.columnCount()
+        self._table.insertColumn(col)
+        self._table.setHorizontalHeaderItem(col, QTableWidgetItem(name.strip()))
+        for r in range(self._table.rowCount()):
+            self._table.setItem(r, col, QTableWidgetItem(""))
+
+    def _on_delete_column(self) -> None:
+        """選択セルの列を削除する. Name列(col 0)は削除禁止."""
+        col = self._table.currentColumn()
+        if col <= 0:
+            return
+        self._table.removeColumn(col)
 
     def _install_key_filter(self) -> None:
         """Delete / Backspace でセルクリアを有効にする."""
