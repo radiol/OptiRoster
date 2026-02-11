@@ -133,7 +133,9 @@ class CsvEditorWindow(QMainWindow):
         self._table.setHorizontalHeaderLabels(["Name", *hospitals])
 
         for r, worker in enumerate(workers):
-            self._table.setItem(r, 0, QTableWidgetItem(worker))
+            name_item = QTableWidgetItem(worker)
+            name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self._table.setItem(r, 0, name_item)
             for c, hospital in enumerate(hospitals):
                 cap = data.get((worker, hospital))
                 text = "" if cap is None else str(cap)
@@ -196,11 +198,17 @@ class CsvEditorWindow(QMainWindow):
             )
 
     def _on_add_row(self) -> None:
-        """選択行の下に空行を挿入する. 未選択なら末尾に追加."""
+        """入力ダイアログで名前を受け取り, 選択行の下に挿入する. 未選択なら末尾."""
+        name, ok = QInputDialog.getText(self, "行追加", "名前:")
+        if not ok or not name.strip():
+            return
         row = self._table.currentRow()
         pos = row + 1 if row >= 0 else self._table.rowCount()
         self._table.insertRow(pos)
-        for c in range(self._table.columnCount()):
+        name_item = QTableWidgetItem(name.strip())
+        name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        self._table.setItem(pos, 0, name_item)
+        for c in range(1, self._table.columnCount()):
             self._table.setItem(pos, c, QTableWidgetItem(""))
         self._table.setCurrentCell(pos, 0)
 
