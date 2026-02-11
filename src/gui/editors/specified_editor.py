@@ -13,19 +13,18 @@ from PySide6.QtCore import QDate, QRect, Qt
 from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import (
     QCalendarWidget,
-    QFileDialog,
     QHBoxLayout,
     QInputDialog,
     QLabel,
     QListWidget,
     QListWidgetItem,
-    QMainWindow,
     QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
+from src.gui.common.base_editor import BaseEditorWindow
 from src.gui.editors.workers_editor import load_hospital_choices
 from src.io.specified_days_loader import load_specified_days
 from src.io.specified_days_writer import dump_specified_days
@@ -130,14 +129,15 @@ class _MonthCalendar(QCalendarWidget):
 # ---------------------------------------------------------------------------
 # GUI
 # ---------------------------------------------------------------------------
-class SpecifiedDatesEditorWindow(QMainWindow):
+class SpecifiedDatesEditorWindow(BaseEditorWindow):
     """specified-dates.toml GUI editor -- hospital list + calendar."""
+
+    _file_filter = "TOML (*.toml)"
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.setWindowTitle("Specified Dates Editor")
         self.resize(900, 600)
-        self.current_path: Path | None = None
         self._model: dict[str, set[int]] = {}
         self._hospitals_path: Path | None = None
 
@@ -322,30 +322,3 @@ class SpecifiedDatesEditorWindow(QMainWindow):
         name = self._current_hospital_name()
         days = self._model[name] if name is not None else set()
         self._calendar.set_highlight_dates(days)
-
-    # -- file operations --
-    def _on_open(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Open TOML", "", "TOML (*.toml)")
-        if path:
-            self.open_path(Path(path))
-
-    def _on_save(self) -> None:
-        if self.current_path is None:
-            self._on_save_as()
-            return
-        self.save_to(self.current_path)
-        QMessageBox.information(
-            self,
-            "\u4fdd\u5b58\u5b8c\u4e86",
-            f"{self.current_path.name} \u3092\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002",
-        )
-
-    def _on_save_as(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(self, "Save As", "", "TOML (*.toml)")
-        if path:
-            self.save_to(Path(path))
-            QMessageBox.information(
-                self,
-                "\u4fdd\u5b58\u5b8c\u4e86",
-                f"{Path(path).name} \u3092\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002",
-            )
