@@ -3,7 +3,6 @@ from __future__ import annotations
 import csv
 import datetime as dt
 import re
-from collections import defaultdict
 from enum import Enum
 
 from src.domain.types import ShiftType
@@ -72,13 +71,14 @@ def load_preferences_csv(path: str) -> dict[tuple[str, dt.date], PreferenceStatu
 
         row_list = list(reader)
         # 1パス目: 当直希望の有無を集計
-        wants_night: dict[str, bool] = defaultdict(bool)
+        wants_night: dict[str, bool] = dict()
         for row in row_list:
             if not row or len(row) <= name_col:
                 continue
             worker = (row[name_col] or "").strip()
             if worker == "":
                 continue
+            wants_night[worker] = False
 
             for col_idx, _ in date_cols:
                 val = (row[col_idx] if col_idx < len(row) else "").strip()

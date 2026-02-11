@@ -43,6 +43,30 @@ def test_blank_becomes_night_forbidden_if_any_wants_night(tmp_path):
     assert res[("診断02", d3)] == PreferenceStatus.NONE
 
 
+def test_multiple_rows_per_person(tmp_path):
+    """
+    同一名の勤務者が複数行にあり、1つ目の行に『当直希望』があり、
+    2つ目の行には『当直希望』がない場合では、2つ目の行の空欄セルは『制限なし』となる。
+    """
+    csv_path = _write(
+        tmp_path,
+        "prefs.csv",
+        """
+        氏名,2025年10月 勤務希望 [10/1(水)],2025年10月 勤務希望 [10/2(木)]
+        診断01,当直希望,
+        診断01, 
+        """,
+    )
+    res = load_preferences_csv(str(csv_path))
+    d1 = dt.date(2025, 10, 1)
+    d2 = dt.date(2025, 10, 2)
+
+    # 1つ目の行の『当直希望』は無視され、
+    # 2つ目の行の空欄セルは『制限なし』となる。
+    assert res[("診断01", d1)] == PreferenceStatus.NONE
+    assert res[("診断01", d2)] == PreferenceStatus.NONE
+
+
 def test_explicit_forbids_take_precedence(tmp_path):
     """
     明示の『当直不可』『外勤・当直不可』は空欄ルールより優先される。
