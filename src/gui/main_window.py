@@ -357,9 +357,11 @@ class MainTab(QWidget):
             year = first_date.year
             month = first_date.month
             default_name = f"schedule_{year}_{month:02d}_{datetime.now().strftime('%H%M%S')}.xlsx"
+            desktop = Path.home() / "Desktop"
+            default_path = str(desktop / default_name) if desktop.exists() else default_name
 
             file_path, _ = QFileDialog.getSaveFileName(
-                self, "勤務表を保存", default_name, "Excel files (*.xlsx);;All files (*)"
+                self, "勤務表を保存", default_path, "Excel files (*.xlsx);;All files (*)"
             )
 
             if not file_path:
