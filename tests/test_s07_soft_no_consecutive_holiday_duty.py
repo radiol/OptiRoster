@@ -148,6 +148,46 @@ def test_or_logic_multiple_shifts_same_day_single_penalty():
 # -- ペナルティが発生しないケース --
 
 
+def test_no_penalty_when_different_workers_on_each_day():
+    """土曜Alice + 日曜Bob -> workerが異なるのでペナルティなし."""
+    sat = dt.date(2025, 6, 7)
+    sun = dt.date(2025, 6, 8)
+    days = [sat, sun]
+
+    x = {}
+    x[("H1", "Alice", sat, ShiftType.DAY)] = _bin("x_a_day", lb=1, ub=1)
+    x[("H1", "Bob", sun, ShiftType.NIGHT)] = _bin("x_b_night", lb=1, ub=1)
+
+    m = pulp.LpProblem("s07_diff_worker", pulp.LpMaximize)
+    ctx: dict = {"days": days}
+    SoftNoConsecutiveHolidayDuty(weight=1.0).apply(m, x, ctx)
+    set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
+
+    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    assert pulp.LpStatus[status] == "Optimal"
+    assert _sum_penalties(ctx) <= 1e-8
+
+
+def test_no_penalty_when_only_next_day_has_duty():
+    """土曜(勤務なし) + 日曜(勤務あり) -> ペナルティなし."""
+    sat = dt.date(2025, 6, 7)
+    sun = dt.date(2025, 6, 8)
+    days = [sat, sun]
+
+    x = {}
+    # Saturday: no duty
+    x[("H1", "Alice", sun, ShiftType.NIGHT)] = _bin("x_night_sun", lb=1, ub=1)
+
+    m = pulp.LpProblem("s07_next_day_only", pulp.LpMaximize)
+    ctx: dict = {"days": days}
+    SoftNoConsecutiveHolidayDuty(weight=1.0).apply(m, x, ctx)
+    set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
+
+    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    assert pulp.LpStatus[status] == "Optimal"
+    assert _sum_penalties(ctx) <= 1e-8
+
+
 def test_no_penalty_when_only_one_day_is_holiday():
     """金曜(平日) + 土曜(休日) -> 両日とも休日ではないのでペナルティなし."""
     fri = dt.date(2025, 6, 6)  # Friday
