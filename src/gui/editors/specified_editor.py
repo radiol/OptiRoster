@@ -150,9 +150,19 @@ class SpecifiedDatesEditorWindow(BaseEditorWindow):
         btn_add.clicked.connect(self._add_hospital)
         btn_del.clicked.connect(self._del_hospital)
 
+        btn_up = QPushButton("\u2191 \u4e0a\u3078")
+        btn_down = QPushButton("\u2193 \u4e0b\u3078")
+        btn_up.clicked.connect(self._move_hospital_up)
+        btn_down.clicked.connect(self._move_hospital_down)
+
         crud_btns = QHBoxLayout()
         crud_btns.addWidget(btn_add)
         crud_btns.addWidget(btn_del)
+
+        move_btns = QHBoxLayout()
+        move_btns.addWidget(btn_up)
+        move_btns.addWidget(btn_down)
+        move_btns.addStretch(1)
 
         # -- right: calendar (default to next month) --
         self._calendar = _MonthCalendar()
@@ -185,6 +195,7 @@ class SpecifiedDatesEditorWindow(BaseEditorWindow):
         left.addSpacing(6)
         left.addWidget(QLabel("\u75c5\u9662\u30ea\u30b9\u30c8"))
         left.addWidget(self.list_hosp)
+        left.addLayout(move_btns)
         left.addLayout(crud_btns)
 
         right = QVBoxLayout()
@@ -297,6 +308,24 @@ class SpecifiedDatesEditorWindow(BaseEditorWindow):
             self.list_hosp.setCurrentRow(min(row, len(self._model) - 1))
         else:
             self._update_calendar_formats()
+
+    # -- move --
+    def _move_hospital(self, delta: int) -> None:
+        row = self.list_hosp.currentRow()
+        new_row = row + delta
+        keys = list(self._model.keys())
+        if row < 0 or new_row < 0 or new_row >= len(keys):
+            return
+        keys[row], keys[new_row] = keys[new_row], keys[row]
+        self._model = {k: self._model[k] for k in keys}
+        self._refresh_hospital_list()
+        self.list_hosp.setCurrentRow(new_row)
+
+    def _move_hospital_up(self) -> None:
+        self._move_hospital(-1)
+
+    def _move_hospital_down(self) -> None:
+        self._move_hospital(1)
 
     # -- calendar --
     def _on_date_clicked(self, date: QDate) -> None:
