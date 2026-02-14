@@ -310,24 +310,22 @@ class SpecifiedDatesEditorWindow(BaseEditorWindow):
             self._update_calendar_formats()
 
     # -- move --
-    def _swap_hospitals(self, i: int, j: int) -> None:
+    def _move_hospital(self, delta: int) -> None:
+        row = self.list_hosp.currentRow()
+        new_row = row + delta
         keys = list(self._model.keys())
-        if i < 0 or j < 0 or i >= len(keys) or j >= len(keys):
+        if row < 0 or new_row < 0 or new_row >= len(keys):
             return
-        keys[i], keys[j] = keys[j], keys[i]
+        keys[row], keys[new_row] = keys[new_row], keys[row]
         self._model = {k: self._model[k] for k in keys}
         self._refresh_hospital_list()
-        self.list_hosp.setCurrentRow(j)
+        self.list_hosp.setCurrentRow(new_row)
 
     def _move_hospital_up(self) -> None:
-        row = self.list_hosp.currentRow()
-        if row > 0:
-            self._swap_hospitals(row, row - 1)
+        self._move_hospital(-1)
 
     def _move_hospital_down(self) -> None:
-        row = self.list_hosp.currentRow()
-        if 0 <= row < len(self._model) - 1:
-            self._swap_hospitals(row, row + 1)
+        self._move_hospital(1)
 
     # -- calendar --
     def _on_date_clicked(self, date: QDate) -> None:
