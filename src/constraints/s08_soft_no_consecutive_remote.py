@@ -23,7 +23,7 @@ class SoftNoConsecutiveRemote(ConstraintBase):
     summary = "遠隔地の連続勤務を避ける"
     requires: ClassVar[set[str]] = {"days", "hospitals"}
 
-    def __init__(self, weight: float = 1.0):
+    def __init__(self, weight: float = 0.5):  # ペナルティのweightは軽め
         self.weight = float(weight)
 
     @override
