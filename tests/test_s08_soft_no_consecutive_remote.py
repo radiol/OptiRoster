@@ -267,3 +267,81 @@ def test_no_penalty_when_no_remote_hospitals():
     status = m.solve(pulp.PULP_CBC_CMD(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
+
+
+def test_no_penalty_when_days_empty():
+    """daysが空の場合は制約追加されずペナルティなし."""
+    d1 = dt.date(2025, 6, 2)
+    days: list[dt.date] = []
+
+    x = {}
+    x[("Remote", "Alice", d1, ShiftType.DAY)] = _bin("s08_x_empty_days", lb=1, ub=1)
+
+    m = pulp.LpProblem("s08_empty_days", pulp.LpMaximize)
+    ctx: dict = {"days": days, "hospitals": [H_REMOTE, H_LOCAL]}
+    SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
+    set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
+
+    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    assert pulp.LpStatus[status] == "Optimal"
+    assert _sum_penalties(ctx) <= 1e-8
+    assert "penalties" not in ctx
+
+
+def test_no_penalty_when_no_assignments():
+    """勤務変数xが空の場合はペナルティなし."""
+    d1 = dt.date(2025, 6, 2)
+    d2 = dt.date(2025, 6, 3)
+    days = [d1, d2]
+
+    x: dict = {}
+
+    m = pulp.LpProblem("s08_empty_x", pulp.LpMaximize)
+    ctx: dict = {"days": days, "hospitals": [H_REMOTE, H_LOCAL]}
+    SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
+    set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
+
+    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    assert pulp.LpStatus[status] == "Optimal"
+    assert _sum_penalties(ctx) <= 1e-8
+    assert "penalties" not in ctx
+
+
+def test_no_penalty_when_hospital_not_in_context_hospitals():
+    """ctx.hospitalsに存在しない病院名の勤務はremote扱いされない."""
+    d1 = dt.date(2025, 6, 2)
+    d2 = dt.date(2025, 6, 3)
+    days = [d1, d2]
+
+    x = {}
+    x[("RemoteUnknown", "Alice", d1, ShiftType.DAY)] = _bin("s08_x_unknown_h1", lb=1, ub=1)
+    x[("RemoteUnknown", "Alice", d2, ShiftType.DAY)] = _bin("s08_x_unknown_h2", lb=1, ub=1)
+
+    m = pulp.LpProblem("s08_unknown_hospital", pulp.LpMaximize)
+    ctx: dict = {"days": days, "hospitals": [H_REMOTE, H_LOCAL]}
+    SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
+    set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
+
+    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    assert pulp.LpStatus[status] == "Optimal"
+    assert _sum_penalties(ctx) <= 1e-8
+
+
+def test_penalty_detected_even_if_days_unsorted():
+    """daysが非ソートでもdとd+1の判定でペナルティは発生する."""
+    d1 = dt.date(2025, 6, 2)
+    d2 = dt.date(2025, 6, 3)
+    days = [d2, d1]
+
+    x = {}
+    x[("Remote", "Alice", d1, ShiftType.DAY)] = _bin("s08_x_unsorted1", lb=1, ub=1)
+    x[("Remote", "Alice", d2, ShiftType.DAY)] = _bin("s08_x_unsorted2", lb=1, ub=1)
+
+    m = pulp.LpProblem("s08_unsorted_days", pulp.LpMaximize)
+    ctx: dict = {"days": days, "hospitals": [H_REMOTE, H_LOCAL]}
+    SoftNoConsecutiveRemote(weight=0.7).apply(m, x, ctx)
+    set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
+
+    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    assert pulp.LpStatus[status] == "Optimal"
+    assert abs(_sum_penalties(ctx) - 0.7) <= 1e-8
