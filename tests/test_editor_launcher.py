@@ -1,7 +1,7 @@
-"""Test: MainWindow のエディタ管理ロジック（辞書による多重起動防止）."""
+"""Test: MainWindow のエディタ管理ロジック(辞書による多重起動防止)."""
 
 import pytest
-from PySide6.QtWidgets import QApplication, QMainWindow
+from PySide6.QtWidgets import QApplication
 
 from src.gui.app import MainWindow
 

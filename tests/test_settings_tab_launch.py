@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from PySide6.QtWidgets import QApplication, QMainWindow
@@ -60,7 +60,7 @@ class TestHospitalsButton:
         with patch.object(registry, "get_or_create", side_effect=spy):
             tab.btn_hospitals.click()
             tab.btn_hospitals.click()
-        # registry 内部で factory は1回だけ呼ばれる（spy は2回呼ばれる）
+        # registry 内部で factory は1回だけ呼ばれる(spy は2回呼ばれる)
         assert call_count == 2  # get_or_create 自体は2回呼ばれるが…
         # 実際の editor インスタンスは1つ
         assert len([k for k in registry._windows if k == "hospitals"]) <= 1

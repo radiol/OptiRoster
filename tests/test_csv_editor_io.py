@@ -56,8 +56,7 @@ class TestCsvEditorOpenPath:
         f.write_text(SAMPLE_CSV, encoding="utf-8")
         editor.open_path(f)
         headers = [
-            editor._table.horizontalHeaderItem(c).text()
-            for c in range(editor._table.columnCount())
+            editor._table.horizontalHeaderItem(c).text() for c in range(editor._table.columnCount())
         ]
         assert headers == ["Name", "病院1", "病院2", "病院3"]
 
