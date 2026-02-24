@@ -34,7 +34,7 @@ def test_university_last_holiday_night_forbids_non_specialist(ensure_constraint)
     ctx = {"days": [d_sat, d_sun, d_mon], "hospitals": [univ, local], "workers": [sp, gen]}
 
     c.apply(m, x, ctx)
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     assert pulp.value(x[(univ.name, gen.name, d_sun, ShiftType.NIGHT)]) == 0

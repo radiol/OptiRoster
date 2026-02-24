@@ -36,7 +36,7 @@ def test_weighting_prefers_farther_pair(ensure_constraint):
     # 目的を""合計-ペナルティ""に設定
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     v = {k: pulp.value(var) for k, var in x.items()}
@@ -78,7 +78,7 @@ def test_no_penalty_when_gap_ge_6(ensure_constraint):
     # 目的を""合計-ペナルティ""に設定
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     vals = [pulp.value(v) for v in x.values()]
     # すべて取れる(ペナルティが無いので合計が最大)
@@ -114,7 +114,7 @@ def test_objective_prefers_farther_with_soft_penalty(ensure_constraint):
     # 目的を""合計-ペナルティ""に設定
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     v1 = pulp.value(x[(h, w, d1, ShiftType.NIGHT)])
@@ -157,5 +157,5 @@ def test_requires_days_missing_is_safe_no_crash(ensure_constraint):
     # 目的を""合計-ペナルティ""に設定
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"

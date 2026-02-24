@@ -56,7 +56,7 @@ def test_enforces_exactly_one_per_required_day():
     slack_vars = list(ctx.get("shortage_slack", {}).values())
     m += pulp.lpSum(slack_vars)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert sum(pulp.value(v) for v in x.values()) == 1  # ちょうど1
     # スラック変数は0になるはず(不足なし)
@@ -90,7 +90,7 @@ def test_non_required_day_is_not_constrained():
 
     # 目的関数を設定して解く(制約がないので任意の値を取れる)
     m += 0  # ダミーの目的関数
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
 
@@ -118,7 +118,7 @@ def test_infeasible_when_required_but_no_candidates():
     slack_vars = list(ctx.get("shortage_slack", {}).values())
     m += pulp.lpSum(slack_vars)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # 実際の勤務者は0人(d_reqの候補がないため)、スラック変数は1になる(人手不足)

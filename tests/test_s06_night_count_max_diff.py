@@ -45,7 +45,7 @@ def test_equal_distribution_no_penalty(ensure_constraint):
     base_obj = pulp.lpSum(x.values())
     set_objective_with_penalties(m, base_obj, ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # 平等分配 (各 2回) なら差=0 ≤ 1でペナルティなし
@@ -80,7 +80,7 @@ def test_one_difference_no_penalty(ensure_constraint):
     base_obj = pulp.lpSum(x.values())
     set_objective_with_penalties(m, base_obj, ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # 3回と2回なら差=1でペナルティなし
@@ -119,7 +119,7 @@ def test_large_difference_incurs_penalty(ensure_constraint):
     base_obj = pulp.lpSum(x.values())
     set_objective_with_penalties(m, base_obj, ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # 4回と2回なら差=2 > 1でペナルティ発生
@@ -156,7 +156,7 @@ def test_three_workers_balanced(ensure_constraint):
     base_obj = pulp.lpSum(x.values())
     set_objective_with_penalties(m, base_obj, ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # 3人で6日なら各 2回の均等分配が可能, 差=0でペナルティなし
@@ -191,7 +191,7 @@ def test_three_workers_unbalanced(ensure_constraint):
     base_obj = pulp.lpSum(x.values())
     set_objective_with_penalties(m, base_obj, ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # 3人で7日なら最良で3-2-2の分配, 差=1でペナルティなし
@@ -229,7 +229,7 @@ def test_insufficient_candidates_ignored(ensure_constraint):
     base_obj = pulp.lpSum(x.values())
     set_objective_with_penalties(m, base_obj, ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # W2が対象外なので, 実質的にペナルティ制約は適用されない

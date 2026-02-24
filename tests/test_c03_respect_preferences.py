@@ -68,7 +68,7 @@ def test_forbid_night_and_all_shifts():
     constraint.apply(m, x, ctx)
 
     # 解くと、禁止された変数は 0 に固定
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     assert pulp.value(x[(h, w1, d, ShiftType.NIGHT)]) == 0

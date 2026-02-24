@@ -54,7 +54,7 @@ def test_penalty_for_consecutive_remote_days():
     SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 1.0) <= 1e-8
 
@@ -75,7 +75,7 @@ def test_penalty_for_different_remote_hospitals():
     SoftNoConsecutiveRemote(weight=0.5).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 0.5) <= 1e-8
 
@@ -98,7 +98,7 @@ def test_penalty_for_three_consecutive_remote_days():
     SoftNoConsecutiveRemote(weight=weight).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 2 * weight) <= 1e-8
 
@@ -121,7 +121,7 @@ def test_multiple_workers_independent_penalties():
     SoftNoConsecutiveRemote(weight=weight).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 2 * weight) <= 1e-8
 
@@ -143,7 +143,7 @@ def test_or_logic_multiple_remote_shifts_same_day_single_penalty():
     SoftNoConsecutiveRemote(weight=weight).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - weight) <= 1e-8
 
@@ -166,7 +166,7 @@ def test_no_penalty_when_local_consecutive():
     SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -186,7 +186,7 @@ def test_no_penalty_when_remote_not_consecutive():
     SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -206,7 +206,7 @@ def test_no_penalty_when_different_workers():
     SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -224,7 +224,7 @@ def test_no_penalty_when_next_day_outside_horizon():
     SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -244,7 +244,7 @@ def test_no_penalty_when_mixed_remote_local():
     SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -264,7 +264,7 @@ def test_no_penalty_when_no_remote_hospitals():
     SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -282,7 +282,7 @@ def test_no_penalty_when_days_empty():
     SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
     assert "penalties" not in ctx
@@ -301,7 +301,7 @@ def test_no_penalty_when_no_assignments():
     SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
     assert "penalties" not in ctx
@@ -322,7 +322,7 @@ def test_no_penalty_when_hospital_not_in_context_hospitals():
     SoftNoConsecutiveRemote(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -342,6 +342,6 @@ def test_penalty_detected_even_if_days_unsorted():
     SoftNoConsecutiveRemote(weight=0.7).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 0.7) <= 1e-8

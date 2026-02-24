@@ -51,7 +51,7 @@ def test_blocks_remote_day_after_night():
     ctx = {"days": [d1, d2], "hospitals": [h_local, h_remote]}
 
     c.apply(m, x, ctx)
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     v_n = pulp.value(x[(h_local.name, w, d1, ShiftType.NIGHT)])
@@ -81,7 +81,7 @@ def test_blocks_remote_am_after_night():
     ctx = {"days": [d1, d2], "hospitals": [h_local, h_remote]}
 
     c.apply(m, x, ctx)
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     v_n = pulp.value(x[(h_local.name, w, d1, ShiftType.NIGHT)])
@@ -113,7 +113,7 @@ def test_allows_remote_pm_or_night_after_night():
     ctx = {"days": [d1, d2], "hospitals": [h_local, h_remote]}
 
     c.apply(m, x, ctx)
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # PM と NIGHT は禁止対象外 → night翌日の同時も可
@@ -147,7 +147,7 @@ def test_multiple_remote_hospitals_sum_blocked():
     ctx = {"days": [d1, d2], "hospitals": [h_local, h_remote1, h_remote2]}
 
     c.apply(m, x, ctx)
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     vN = pulp.value(x[(h_local.name, w, d1, ShiftType.NIGHT)])

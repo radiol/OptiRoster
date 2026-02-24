@@ -44,7 +44,7 @@ def test_penalty_for_DAY_after_NIGHT():
     SoftNoDutyAfterNight(weight=0.5).apply(m, x, ctx)
     set_objective_with_penalties(m, base_obj, ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 0.5) <= 1e-8
 
@@ -66,7 +66,7 @@ def test_penalty_for_AM_after_NIGHT():
     SoftNoDutyAfterNight(weight=0.8).apply(m, x, ctx)
     set_objective_with_penalties(m, base_obj, ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 0.8) <= 1e-8
 
@@ -87,7 +87,7 @@ def test_no_penalty_for_PM_or_no_night():
     ctx1 = {"days": days}
     SoftNoDutyAfterNight(weight=1.0).apply(m1, x1, ctx1)
     set_objective_with_penalties(m1, pulp.lpSum(x1.values()), ctx1)
-    status = m1.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m1.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx1) <= 1e-8
 
@@ -98,7 +98,7 @@ def test_no_penalty_for_PM_or_no_night():
     ctx2 = {"days": days}
     SoftNoDutyAfterNight(weight=1.0).apply(m2, x2, ctx2)
     set_objective_with_penalties(m2, pulp.lpSum(x2.values()), ctx2)
-    status = m2.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m2.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx2) <= 1e-8
 
@@ -116,7 +116,7 @@ def test_no_penalty_when_next_day_outside_horizon():
     SoftNoDutyAfterNight(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -143,7 +143,7 @@ def test_multiple_conflicts_sum_over_days_and_workers():
     SoftNoDutyAfterNight(weight=weight).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 2 * weight) <= 1e-8
 
@@ -166,6 +166,6 @@ def test_or_logic_single_penalty_even_if_multiple_next_day_assignments():
     SoftNoDutyAfterNight(weight=weight).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - weight) <= 1e-8

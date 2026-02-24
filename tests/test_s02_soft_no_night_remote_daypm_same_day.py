@@ -32,7 +32,7 @@ def test_penalty_applied_when_same_day_night_and_remote_daypm(ensure_constraint)
     # 目的設定(合計 - ペナルティ)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # Night+RemoteDayの両立はペナルティで避けられる → 典型解では片方が立つ

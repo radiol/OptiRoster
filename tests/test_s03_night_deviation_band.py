@@ -47,7 +47,7 @@ def test_two_weekdays_balance_no_penalty(ensure_constraint):
     base_obj = pulp.lpSum(x.values())
     set_objective_with_penalties(m, base_obj, ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _s03_penalty_value(ctx) <= 1e-8
     assert math.isclose(
@@ -92,7 +92,7 @@ def test_weekend_weighting_targets_two_each_no_penalty(ensure_constraint):
     c.apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _s03_penalty_value(ctx) <= 1e-8
 
@@ -126,7 +126,7 @@ def test_forced_skew_incurs_penalty_with_6_days(ensure_constraint):
     c.apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     print(f"[Debug] Total penalty: {_s03_penalty_value(ctx)}")
 
