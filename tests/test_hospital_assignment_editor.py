@@ -276,6 +276,51 @@ class TestSaveTo:
 
 
 # ---------------------------------------------------------------------------
+# 折りたたみ動作
+# ---------------------------------------------------------------------------
+class TestCollapse:
+    def test_all_default_hospital_is_collapsed(self, editor_with_workers):
+        """全員無制限の病院は初期状態で折りたたまれている."""
+        editor, tmp_path = editor_with_workers
+        csv_file = tmp_path / "max.csv"
+        csv_file.write_text(MAX_CSV_ALL_DEFAULT, encoding="utf-8")
+        editor.open_path(csv_file)
+
+        # 病院2は全員無制限 -> 折りたたみ状態
+        assert editor.is_collapsed("病院2") is True
+
+    def test_non_default_hospital_is_expanded(self, editor_with_workers):
+        """設定のある病院は初期状態で展開されている."""
+        editor, tmp_path = editor_with_workers
+        csv_file = tmp_path / "max.csv"
+        csv_file.write_text(MAX_CSV_WITH_SETTINGS, encoding="utf-8")
+        editor.open_path(csv_file)
+
+        # 病院2にIVR02=0の設定がある -> 展開状態
+        assert editor.is_collapsed("病院2") is False
+
+    def test_toggle_expands_collapsed_hospital(self, editor_with_workers):
+        """折りたたまれた病院のヘッダをトグルすると展開される."""
+        editor, tmp_path = editor_with_workers
+        csv_file = tmp_path / "max.csv"
+        csv_file.write_text(MAX_CSV_ALL_DEFAULT, encoding="utf-8")
+        editor.open_path(csv_file)
+
+        editor.toggle_collapse("病院2")
+        assert editor.is_collapsed("病院2") is False
+
+    def test_toggle_collapses_expanded_hospital(self, editor_with_workers):
+        """展開中の病院のヘッダをトグルすると折りたたまれる."""
+        editor, tmp_path = editor_with_workers
+        csv_file = tmp_path / "max.csv"
+        csv_file.write_text(MAX_CSV_WITH_SETTINGS, encoding="utf-8")
+        editor.open_path(csv_file)
+
+        editor.toggle_collapse("病院2")
+        assert editor.is_collapsed("病院2") is True
+
+
+# ---------------------------------------------------------------------------
 # Scenario 8: workers.toml なしで開くと空のビューになる
 # ---------------------------------------------------------------------------
 class TestOpenWithoutWorkersPath:

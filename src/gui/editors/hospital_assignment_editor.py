@@ -93,6 +93,10 @@ class HospitalAssignmentEditorWindow(BaseEditorWindow):
         self._hw_map: dict[str, list[str]] = {}
         # (worker, hospital) -> QButtonGroup
         self._button_groups: dict[tuple[str, str], QButtonGroup] = {}
+        # hospital -> bool (True = collapsed)
+        self._collapsed: dict[str, bool] = {}
+        # hospital -> body QWidget
+        self._bodies: dict[str, QWidget] = {}
 
         # --- toolbar ---
         toolbar = QHBoxLayout()
@@ -191,11 +195,28 @@ class HospitalAssignmentEditorWindow(BaseEditorWindow):
         """表示中の病院セクション数を返す."""
         return len(self._hw_map)
 
+    def is_collapsed(self, hospital: str) -> bool:
+        """指定病院が折りたたまれていれば True."""
+        return self._collapsed.get(hospital, False)
+
+    def toggle_collapse(self, hospital: str) -> None:
+        """指定病院の折りたたみ状態を反転し、ビューに反映する."""
+        self._collapsed[hospital] = not self._collapsed.get(hospital, False)
+        body = self._bodies.get(hospital)
+        if body is not None:
+            body.setVisible(not self._collapsed[hospital])
+
     # --- private: UI construction ---
 
     def _rebuild_ui(self) -> None:
         """_hw_map と _model からビューを再構築する."""
         self._button_groups.clear()
+        self._bodies.clear()
+
+        # 各病院の折りたたみ初期状態を設定 (設定なし -> 折りたたむ)
+        for hospital in self._hw_map:
+            if hospital not in self._collapsed:
+                self._collapsed[hospital] = not self.has_non_default(hospital)
 
         # 既存ウィジェットを全削除 (stretch を除く)
         while self._content_layout.count() > 1:
@@ -214,24 +235,57 @@ class HospitalAssignmentEditorWindow(BaseEditorWindow):
         frame = QFrame()
         frame.setFrameShape(QFrame.Shape.StyledPanel)
         layout = QVBoxLayout(frame)
+        layout.setSpacing(0)
 
         non_default = self.has_non_default(hospital)
+        collapsed = self._collapsed.get(hospital, not non_default)
 
-        # --- ヘッダ ---
-        header = QLabel(hospital)
-        font = header.font()
+        # --- ヘッダ (クリックで折りたたみトグル) ---
+        arrow = "▶" if collapsed else "▼"
+        header_btn = QPushButton(f"{arrow} {hospital}")
+        header_btn.setFlat(True)
+        header_btn.setCheckable(False)
+        font = header_btn.font()
         font.setBold(non_default)
-        header.setFont(font)
+        header_btn.setFont(font)
         if not non_default:
-            header.setStyleSheet("color: gray;")
-        layout.addWidget(header)
+            header_btn.setStyleSheet("color: gray; text-align: left;")
+        else:
+            header_btn.setStyleSheet("text-align: left;")
+        layout.addWidget(header_btn)
 
-        # --- 勤務者行 ---
+        # --- 勤務者行をまとめる body ウィジェット ---
+        body = QWidget()
+        body_layout = QVBoxLayout(body)
+        body_layout.setContentsMargins(0, 0, 0, 0)
         for worker in workers:
             row = self._make_worker_row(worker, hospital)
-            layout.addWidget(row)
+            body_layout.addWidget(row)
+        body.setVisible(not collapsed)
+        layout.addWidget(body)
+
+        self._bodies[hospital] = body
+
+        header_btn.clicked.connect(self._make_collapse_handler(hospital, header_btn, body))
 
         return frame
+
+    def _make_collapse_handler(
+        self, hospital: str, header_btn: QPushButton, body: QWidget
+    ) -> object:
+        def handler() -> None:
+            self._collapsed[hospital] = not self._collapsed.get(hospital, False)
+            collapsed = self._collapsed[hospital]
+            body.setVisible(not collapsed)
+            non_default = self.has_non_default(hospital)
+            arrow = "▶" if collapsed else "▼"
+            header_btn.setText(f"{arrow} {hospital}")
+            if not non_default:
+                header_btn.setStyleSheet("color: gray; text-align: left;")
+            else:
+                header_btn.setStyleSheet("text-align: left;")
+
+        return handler
 
     def _make_worker_row(self, worker: str, hospital: str) -> QWidget:
         """1勤務者分の行ウィジェット (名前 + 4択ボタン) を作成する."""
