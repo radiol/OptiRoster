@@ -96,8 +96,9 @@ class SettingsTab(QWidget):
             editor.open_path(self._paths.workers_toml)
 
     def _open_csv(self) -> None:
-        from src.gui.editors.csv_editor import CsvEditorWindow
+        from src.gui.editors.hospital_assignment_editor import HospitalAssignmentEditorWindow
 
-        editor = self._registry.get_or_create("csv", CsvEditorWindow)
+        editor = self._registry.get_or_create("csv", HospitalAssignmentEditorWindow)
+        editor.set_workers_path(self._paths.workers_toml)
         if editor.current_path is None and self._paths.max_assignments_csv.exists():
             editor.open_path(self._paths.max_assignments_csv)

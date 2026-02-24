@@ -92,6 +92,15 @@ class TestCsvButton:
             mock.assert_called_once()
             assert mock.call_args[0][0] == "csv"
 
+    def test_click_opens_hospital_assignment_editor(self, tab, registry):
+        """btn_csv が HospitalAssignmentEditorWindow を生成すること."""
+        from src.gui.editors.hospital_assignment_editor import HospitalAssignmentEditorWindow
+
+        tab.btn_csv.click()
+        editor = registry._windows.get("csv")
+        assert editor is not None
+        assert isinstance(editor, HospitalAssignmentEditorWindow)
+
 
 class TestAllButtonsExist:
     def test_four_buttons(self, tab):
