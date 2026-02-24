@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 from pandas.api.types import is_integer_dtype
+from pulp import HiGHS
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
@@ -271,7 +272,7 @@ class MainTab(QWidget):
             self.log_append(f"制約数: {model.numConstraints()}, 変数数: {model.numVariables()}")
 
             self.log_append("最適化を実行中...")
-            res = solve(model, x, ctx, build_objective=False)
+            res = solve(model, x, ctx, build_objective=False, solver=HiGHS(msg=True))
 
             self.log_append(f"最適化完了: {res.status}")
             self.log_append(f"目的関数値: {res.objective_value}")
