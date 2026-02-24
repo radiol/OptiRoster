@@ -1,10 +1,16 @@
+# DEPRECATED: このファイルは削除予定です。
+# HospitalAssignmentEditorWindow (hospital_assignment_editor.py) に置き換え済み。
+# 参照箇所がなくなり次第削除してください。
 """CSV editor -- QTableWidget-based editing window for max-assignments.csv.
 
-Uses src/io/max_assignments_loader and max_assignments_writer for IO.
+.. deprecated::
+    Use HospitalAssignmentEditorWindow instead.
+    This module will be removed in a future release.
 """
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 from PySide6.QtCore import Qt
@@ -32,6 +38,12 @@ class CsvEditorWindow(BaseEditorWindow):
     _file_filter = "CSV (*.csv)"
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        warnings.warn(
+            "CsvEditorWindow is deprecated and will be removed. "
+            "Use HospitalAssignmentEditorWindow instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(parent)
         self.setWindowTitle("CSV Editor")
         self.resize(900, 600)
