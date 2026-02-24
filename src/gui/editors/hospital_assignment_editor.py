@@ -103,13 +103,16 @@ class HospitalAssignmentEditorWindow(BaseEditorWindow):
         btn_open = QPushButton("Open")
         btn_save = QPushButton("Save")
         btn_save_as = QPushButton("Save As")
+        self.btn_reload = QPushButton("Reload Workers")
         toolbar.addWidget(btn_open)
         toolbar.addWidget(btn_save)
         toolbar.addWidget(btn_save_as)
+        toolbar.addWidget(self.btn_reload)
         toolbar.addStretch()
         btn_open.clicked.connect(self._on_open)
         btn_save.clicked.connect(self._on_save)
         btn_save_as.clicked.connect(self._on_save_as)
+        self.btn_reload.clicked.connect(self.reload_workers)
 
         # --- scroll area for hospital sections ---
         self._content_widget = QWidget()
@@ -134,6 +137,25 @@ class HospitalAssignmentEditorWindow(BaseEditorWindow):
     def set_workers_path(self, path: Path) -> None:
         """workers.toml のパスを設定する."""
         self._workers_path = path
+
+    def reload_workers(self) -> None:
+        """workers.toml を再読み込みして _hw_map を更新する.
+
+        max-assignments の編集内容 (_model) は保持される。
+        workers.toml が未設定または存在しない場合は何もしない。
+        """
+        if self._workers_path is None or not self._workers_path.exists():
+            return
+        try:
+            workers = load_workers(str(self._workers_path))
+            self._hw_map = build_hospital_worker_map(workers)
+            # 折りたたみ状態は既存キーを維持し、新規病院のみ初期化
+            for hospital in self._hw_map:
+                if hospital not in self._collapsed:
+                    self._collapsed[hospital] = not self.has_non_default(hospital)
+            self._rebuild_ui()
+        except Exception as e:
+            QMessageBox.critical(self, "エラー", f"workers.toml の再読み込みに失敗:\n{e}")
 
     def open_path(self, path: Path) -> None:
         """max-assignments.csv を読み込んでビューを更新する."""

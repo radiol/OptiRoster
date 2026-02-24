@@ -336,3 +336,86 @@ class TestOpenWithoutWorkersPath:
         csv_file.write_text(MAX_CSV_ALL_DEFAULT, encoding="utf-8")
         editor.open_path(csv_file)
         assert editor.hospital_count() == 0
+
+
+# ---------------------------------------------------------------------------
+# workers.toml リロードボタン
+# ---------------------------------------------------------------------------
+
+WORKERS_TOML_UPDATED = """\
+[[workers]]
+name = "IVR01"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院8"
+weekdays = ["土曜"]
+shift_type = "日勤"
+
+[[workers]]
+name = "IVR02"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院2"
+weekdays = ["金曜"]
+shift_type = "日勤"
+
+[[workers]]
+name = "診断01"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院1"
+weekdays = ["月曜"]
+shift_type = "当直"
+"""
+
+
+class TestReloadWorkersButton:
+    def test_reload_button_exists(self, editor_with_workers):
+        """ツールバーに Reload ボタンが存在する."""
+        editor, _ = editor_with_workers
+        assert hasattr(editor, "btn_reload")
+
+    def test_reload_updates_hw_map(self, editor_with_workers):
+        """Reload 後に workers.toml の変更が _hw_map に反映される."""
+        editor, tmp_path = editor_with_workers
+        csv_file = tmp_path / "max.csv"
+        csv_file.write_text(MAX_CSV_ALL_DEFAULT, encoding="utf-8")
+        editor.open_path(csv_file)
+
+        # 初期状態: IVR01 は 病院2 に所属
+        assert "IVR01" in editor.workers_for_hospital("病院2")
+
+        # workers.toml を更新 (IVR01 の 病院2 担当を削除)
+        workers_toml = tmp_path / "workers.toml"
+        workers_toml.write_text(WORKERS_TOML_UPDATED, encoding="utf-8")
+
+        editor.btn_reload.click()
+
+        assert "IVR01" not in editor.workers_for_hospital("病院2")
+
+    def test_reload_preserves_model(self, editor_with_workers):
+        """Reload しても編集中の max-assignments 設定値は保持される."""
+        editor, tmp_path = editor_with_workers
+        csv_file = tmp_path / "max.csv"
+        csv_file.write_text(MAX_CSV_ALL_DEFAULT, encoding="utf-8")
+        editor.open_path(csv_file)
+
+        editor.set_value("IVR02", "病院2", 1)
+
+        workers_toml = tmp_path / "workers.toml"
+        workers_toml.write_text(WORKERS_TOML_UPDATED, encoding="utf-8")
+
+        editor.btn_reload.click()
+
+        # IVR02 は WORKERS_TOML_UPDATED でも 病院2 に残るので値が保持される
+        assert editor.get_value("IVR02", "病院2") == 1
+
+    def test_reload_without_workers_path_does_not_raise(self, editor, tmp_path: Path):
+        """workers.toml 未設定で Reload しても例外が出ない."""
+        csv_file = tmp_path / "max.csv"
+        csv_file.write_text(MAX_CSV_ALL_DEFAULT, encoding="utf-8")
+        editor.open_path(csv_file)
+        editor.btn_reload.click()  # 例外が出ないこと
