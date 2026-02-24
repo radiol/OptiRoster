@@ -55,7 +55,7 @@ def test_balance_two_mondays_day_no_penalty(ensure_constraint):
     # ベースは割当最大化(= 2)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # 典型解は W1@d1, W2@d2 など → 1-1 でペナルティ0
@@ -96,7 +96,7 @@ def test_skew_two_mondays_day_has_penalty(ensure_constraint):
     c.apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     assert _sum_penalties(ctx) > 1e-6
@@ -137,7 +137,7 @@ def test_min_candidate_filter_excludes_sparse_worker(ensure_constraint):
     c.apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # W2 は min_candidate(=2) を満たさないため Wh から外れ、Kh<=1 でスキップ → ペナルティ0

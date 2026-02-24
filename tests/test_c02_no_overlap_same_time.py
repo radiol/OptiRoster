@@ -55,7 +55,7 @@ def test_same_shift_across_hospitals_forbidden():
     model += pulp.lpSum(x.values())
 
     constraint.apply(model, x, ctx={})
-    status = model.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = model.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     chosen = [k for k, v in x.items() if pulp.value(v) == 1]
@@ -85,7 +85,7 @@ def test_day_with_am_forbidden_but_am_pm_allowed():
     m1 = pulp.LpProblem("day_am", pulp.LpMaximize)
     m1 += pulp.lpSum(x1.values())
     constraint.apply(m1, x1, ctx={})
-    s1 = m1.solve(pulp.PULP_CBC_CMD(msg=False))
+    s1 = m1.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[s1] == "Optimal"
     assert sum(pulp.value(v) for v in x1.values()) == 1  # 片方のみ
 
@@ -97,7 +97,7 @@ def test_day_with_am_forbidden_but_am_pm_allowed():
     m2 = pulp.LpProblem("am_pm", pulp.LpMaximize)
     m2 += pulp.lpSum(x2.values())
     constraint.apply(m2, x2, ctx={})
-    s2 = m2.solve(pulp.PULP_CBC_CMD(msg=False))
+    s2 = m2.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[s2] == "Optimal"
     assert sum(pulp.value(v) for v in x2.values()) == 2  # 両方選べる
 
@@ -122,7 +122,7 @@ def test_night_overlap_forbidden_across_hospitals():
     m = pulp.LpProblem("night_night", pulp.LpMaximize)
     m += pulp.lpSum(x.values())
     constraint.apply(m, x, ctx={})
-    s = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    s = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[s] == "Optimal"
     assert sum(pulp.value(v) for v in x.values()) == 1
 
@@ -149,7 +149,7 @@ def test_night_with_day_allowed_on_weekday():
     m += pulp.lpSum(x.values())
 
     constraint.apply(m, x, ctx={})
-    s = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    s = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[s] == "Optimal"
     assert sum(pulp.value(v) for v in x.values()) == 2  # both can be chosen
 
@@ -176,7 +176,7 @@ def test_night_with_day_forbidden_on_holiday_or_weekend():
     m += pulp.lpSum(x.values())
 
     constraint.apply(m, x, ctx={})
-    s = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    s = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[s] == "Optimal"
     assert sum(pulp.value(v) for v in x.values()) == 1  # only one can be chosen
 
@@ -203,6 +203,6 @@ def test_am_pm_still_allowed_on_holiday_or_weekend():
     m += pulp.lpSum(x.values())
 
     constraint.apply(m, x, ctx={})
-    s = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    s = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[s] == "Optimal"
     assert sum(pulp.value(v) for v in x.values()) == 2  # both can be chosen

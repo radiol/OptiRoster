@@ -47,7 +47,7 @@ def test_no_two_nights_within_5day_window():
     ctx = {"days": [d1, d2, d3]}
     constraint.apply(m, x, ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     v = {k: pulp.value(vv) for k, vv in x.items()}

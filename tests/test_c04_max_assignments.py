@@ -52,7 +52,7 @@ def test_cap_is_enforced_and_none_is_unbounded():
     ctx = {"max_assignments": caps}
     constraint.apply(m, x, ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     # w1 は合計1に抑えられる

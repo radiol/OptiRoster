@@ -50,7 +50,7 @@ def test_penalty_for_sat_day_sun_night():
     SoftNoConsecutiveHolidayDuty(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 1.0) <= 1e-8
 
@@ -70,7 +70,7 @@ def test_penalty_for_consecutive_holiday_am_pm():
     SoftNoConsecutiveHolidayDuty(weight=0.7).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 0.7) <= 1e-8
 
@@ -94,7 +94,7 @@ def test_three_consecutive_holidays_two_penalties():
     SoftNoConsecutiveHolidayDuty(weight=weight).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 2 * weight) <= 1e-8
 
@@ -117,7 +117,7 @@ def test_multiple_workers_independent_penalties():
     SoftNoConsecutiveHolidayDuty(weight=weight).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - 2 * weight) <= 1e-8
 
@@ -140,7 +140,7 @@ def test_or_logic_multiple_shifts_same_day_single_penalty():
     SoftNoConsecutiveHolidayDuty(weight=weight).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert abs(_sum_penalties(ctx) - weight) <= 1e-8
 
@@ -163,7 +163,7 @@ def test_no_penalty_when_different_workers_on_each_day():
     SoftNoConsecutiveHolidayDuty(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -183,7 +183,7 @@ def test_no_penalty_when_only_next_day_has_duty():
     SoftNoConsecutiveHolidayDuty(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -203,7 +203,7 @@ def test_no_penalty_when_only_one_day_is_holiday():
     SoftNoConsecutiveHolidayDuty(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -223,7 +223,7 @@ def test_no_penalty_when_weekday_consecutive():
     SoftNoConsecutiveHolidayDuty(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -243,7 +243,7 @@ def test_no_penalty_when_holiday_but_only_one_day_has_duty():
     SoftNoConsecutiveHolidayDuty(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8
 
@@ -261,6 +261,6 @@ def test_no_penalty_when_next_day_outside_horizon():
     SoftNoConsecutiveHolidayDuty(weight=1.0).apply(m, x, ctx)
     set_objective_with_penalties(m, pulp.lpSum(x.values()), ctx)
 
-    status = m.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
     assert _sum_penalties(ctx) <= 1e-8

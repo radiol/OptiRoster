@@ -87,7 +87,7 @@ def test_one_person_per_hospital_constraint_applies_and_solves():
         c.apply(model, x, ctx)
 
     # 求解して、ちょうど1個が選ばれることを確認
-    status = model.solve(pulp.PULP_CBC_CMD(msg=False))
+    status = model.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
 
     chosen = [k for k, v in x.items() if pulp.value(v) == 1]
