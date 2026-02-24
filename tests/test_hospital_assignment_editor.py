@@ -419,3 +419,86 @@ class TestReloadWorkersButton:
         csv_file.write_text(MAX_CSV_ALL_DEFAULT, encoding="utf-8")
         editor.open_path(csv_file)
         editor.btn_reload.click()  # 例外が出ないこと
+
+
+# ---------------------------------------------------------------------------
+# 勤務曜日の表示
+# ---------------------------------------------------------------------------
+class TestWorkerWeekdayLabel:
+    def test_worker_label_includes_weekday(self, editor_with_workers):
+        """勤務者ラベルに病院の担当曜日が含まれる (例: 'IVR01(金)')."""
+        editor, tmp_path = editor_with_workers
+        csv_file = tmp_path / "max.csv"
+        csv_file.write_text(MAX_CSV_ALL_DEFAULT, encoding="utf-8")
+        editor.open_path(csv_file)
+
+        # WORKERS_TOML より IVR01 の 病院2 担当は金曜
+        label = editor.worker_label("IVR01", "病院2")
+        assert "IVR01" in label
+        assert "金" in label
+
+    def test_worker_label_format(self, editor_with_workers):
+        """ラベルの形式は 'name(曜日)' になっている."""
+        editor, tmp_path = editor_with_workers
+        csv_file = tmp_path / "max.csv"
+        csv_file.write_text(MAX_CSV_ALL_DEFAULT, encoding="utf-8")
+        editor.open_path(csv_file)
+
+        label = editor.worker_label("IVR01", "病院2")
+        assert label == "IVR01(金)"
+
+    def test_worker_label_multiple_days(self, editor_with_workers, tmp_path):
+        """複数曜日の場合はカンマ区切りで表示される."""
+        # IVR01 が病院2 に月・金担当のworkers.tomlを用意
+        multi_day_toml = """\
+[[workers]]
+name = "IVR01"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院2"
+weekdays = ["月曜", "金曜"]
+shift_type = "日勤"
+"""
+        workers_file = tmp_path / "workers_multi.toml"
+        workers_file.write_text(multi_day_toml, encoding="utf-8")
+
+        from PySide6.QtWidgets import QApplication
+
+        from src.gui.editors.hospital_assignment_editor import HospitalAssignmentEditorWindow
+
+        QApplication.instance() or QApplication([])
+        w = HospitalAssignmentEditorWindow()
+        w.set_workers_path(workers_file)
+        csv_file = tmp_path / "max2.csv"
+        csv_file.write_text("Name,病院2\nIVR01,\n", encoding="utf-8")
+        w.open_path(csv_file)
+
+        label = w.worker_label("IVR01", "病院2")
+        assert label == "IVR01(月,金)"
+        w.close()
+
+    def test_reload_updates_weekday_label(self, editor_with_workers):
+        """Reload Workers 後にラベルも更新される."""
+        editor, tmp_path = editor_with_workers
+        csv_file = tmp_path / "max.csv"
+        csv_file.write_text(MAX_CSV_ALL_DEFAULT, encoding="utf-8")
+        editor.open_path(csv_file)
+
+        # 更新: IVR02 の病院2 を土曜に変更
+        new_toml = """\
+[[workers]]
+name = "IVR02"
+is_diagnostic_specialist = true
+
+[[workers.assignments]]
+hospital = "病院2"
+weekdays = ["土曜"]
+shift_type = "日勤"
+"""
+        workers_toml = tmp_path / "workers.toml"
+        workers_toml.write_text(new_toml, encoding="utf-8")
+        editor.btn_reload.click()
+
+        label = editor.worker_label("IVR02", "病院2")
+        assert "土" in label

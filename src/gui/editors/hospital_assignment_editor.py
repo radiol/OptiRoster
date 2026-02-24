@@ -39,6 +39,43 @@ _OPTIONS: list[tuple[int | None, str]] = [
 ]
 
 
+def build_worker_hospital_weekdays(
+    workers: list[Worker],
+) -> dict[tuple[str, str], list[str]]:
+    """Build a mapping of (worker, hospital) -> ordered, deduped short weekday names.
+
+    Short form: first character of each Weekday value (e.g. "月曜" -> "月").
+    Multiple assignments for the same (worker, hospital) pair are merged.
+
+    Args:
+        workers: List of Worker domain objects.
+
+    Returns:
+        Dict mapping (worker_name, hospital_name) to list of short weekday strings.
+    """
+    _ORDER = ["月", "火", "水", "木", "金", "土", "日"]
+
+    result: dict[tuple[str, str], list[str]] = {}
+    for worker in workers:
+        for rule in worker.assignments:
+            key = (worker.name, rule.hospital)
+            if key not in result:
+                result[key] = []
+            seen = set(result[key])
+            for wd in rule.weekdays:
+                short = wd.value[0]  # "月曜" -> "月"
+                if short not in seen:
+                    result[key].append(short)
+                    seen.add(short)
+
+    # 月,火,水,木,金,土,日 の順に正規化
+    for key in result:
+        result[key] = sorted(
+            result[key], key=lambda d: _ORDER.index(d) if d in _ORDER else len(_ORDER)
+        )
+    return result
+
+
 def build_hospital_worker_map(workers: list[Worker]) -> dict[str, list[str]]:
     """Build an ordered mapping of hospital -> [worker_name, ...].
 
@@ -97,6 +134,8 @@ class HospitalAssignmentEditorWindow(BaseEditorWindow):
         self._collapsed: dict[str, bool] = {}
         # hospital -> body QWidget
         self._bodies: dict[str, QWidget] = {}
+        # (worker, hospital) -> ["月", "金", ...]
+        self._worker_weekdays: dict[tuple[str, str], list[str]] = {}
 
         # --- toolbar ---
         toolbar = QHBoxLayout()
@@ -149,6 +188,7 @@ class HospitalAssignmentEditorWindow(BaseEditorWindow):
         try:
             workers = load_workers(str(self._workers_path))
             self._hw_map = build_hospital_worker_map(workers)
+            self._worker_weekdays = build_worker_hospital_weekdays(workers)
             # 折りたたみ状態は既存キーを維持し、新規病院のみ初期化
             for hospital in self._hw_map:
                 if hospital not in self._collapsed:
@@ -172,6 +212,7 @@ class HospitalAssignmentEditorWindow(BaseEditorWindow):
 
             workers = load_workers(str(self._workers_path))
             self._hw_map = build_hospital_worker_map(workers)
+            self._worker_weekdays = build_worker_hospital_weekdays(workers)
 
             # CSV が存在すれば読み込む、なければ空モデル
             if path.exists() and path.stat().st_size > 0:
@@ -194,6 +235,13 @@ class HospitalAssignmentEditorWindow(BaseEditorWindow):
     def workers_for_hospital(self, hospital: str) -> list[str]:
         """指定病院の担当勤務者リストを返す."""
         return list(self._hw_map.get(hospital, []))
+
+    def worker_label(self, worker: str, hospital: str) -> str:
+        """勤務者の表示ラベルを返す (例: 'IVR01(月,金)')."""
+        days = self._worker_weekdays.get((worker, hospital), [])
+        if days:
+            return f"{worker}({','.join(days)})"
+        return worker
 
     def get_value(self, worker: str, hospital: str) -> int | None:
         """指定 (worker, hospital) の現在の上限値を返す."""
@@ -315,8 +363,8 @@ class HospitalAssignmentEditorWindow(BaseEditorWindow):
         h = QHBoxLayout(row)
         h.setContentsMargins(16, 0, 0, 0)
 
-        name_label = QLabel(worker)
-        name_label.setMinimumWidth(80)
+        name_label = QLabel(self.worker_label(worker, hospital))
+        name_label.setMinimumWidth(100)
         name_label.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
         h.addWidget(name_label)
 
