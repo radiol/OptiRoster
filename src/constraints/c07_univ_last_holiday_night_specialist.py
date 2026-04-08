@@ -25,7 +25,7 @@ class UnivLastHolidayNightSpecialistOnly(ConstraintBase):
     requires: ClassVar[set[str]] = {"days", "hospitals", "workers"}
 
     @override
-    def apply(
+    def _apply(
         self,
         model: pulp.LpProblem,
         x: Mapping[VarKey, pulp.LpVariable],

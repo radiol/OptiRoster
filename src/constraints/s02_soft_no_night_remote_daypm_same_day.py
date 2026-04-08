@@ -27,7 +27,7 @@ class SoftNoNightRemoteDayPmSameDay(ConstraintBase):
         self.weight = float(weight)
 
     @override
-    def apply(
+    def _apply(
         self,
         model: pulp.LpProblem,
         x: Mapping[VarKey, pulp.LpVariable],

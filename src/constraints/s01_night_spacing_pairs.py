@@ -44,7 +44,7 @@ class SoftNightSpacingPairs(ConstraintBase):
         return max(0, self.no_penalty_gap - delta_days) * self.base_weight
 
     @override
-    def apply(
+    def _apply(
         self,
         model: pulp.LpProblem,
         x: Mapping[VarKey, pulp.LpVariable],

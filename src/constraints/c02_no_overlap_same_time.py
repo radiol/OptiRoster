@@ -26,7 +26,7 @@ class NoOverlapSameTimeAcrossHospitals(ConstraintBase):
     requires: ClassVar[set[str]] = set()
 
     @override
-    def apply(
+    def _apply(
         self, model: pulp.LpProblem, x: Mapping[VarKey, pulp.LpVariable], ctx: Context
     ) -> None:
         # (w, d) ごとにまとめる
