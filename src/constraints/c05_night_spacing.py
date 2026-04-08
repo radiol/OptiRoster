@@ -31,7 +31,7 @@ class NightSpacing(ConstraintBase):
         self.window_days = max(2, int(window_days))
 
     @override
-    def apply(
+    def _apply(
         self,
         model: pulp.LpProblem,
         x: Mapping[VarKey, pulp.LpVariable],

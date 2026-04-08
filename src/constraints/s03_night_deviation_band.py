@@ -48,7 +48,7 @@ class SoftNightDeviationBand(ConstraintBase):
         return self.holiday_weight if is_holiday_or_weekend(d) else 1.0
 
     @override
-    def apply(
+    def _apply(
         self,
         model: pulp.LpProblem,
         x: Mapping[VarKey, pulp.LpVariable],

@@ -24,7 +24,7 @@ class ForbidRemoteAfterNight(ConstraintBase):
     requires: ClassVar[set[str]] = {"days", "hospitals"}
 
     @override
-    def apply(
+    def _apply(
         self,
         model: pulp.LpProblem,
         x: Mapping[VarKey, pulp.LpVariable],

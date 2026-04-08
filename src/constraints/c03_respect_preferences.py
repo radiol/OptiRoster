@@ -24,7 +24,7 @@ class RespectPreferencesFromCSV(ConstraintBase):
     requires: ClassVar[set[str]] = {"preferences"}  # ctx 依存
 
     @override
-    def apply(
+    def _apply(
         self, model: pulp.LpProblem, x: Mapping[VarKey, pulp.LpVariable], ctx: Context
     ) -> None:
         pref = ctx.get("preferences", {})

@@ -17,10 +17,9 @@ class OnePersonPerHospital(ConstraintBase):
     requires: ClassVar[set[str]] = {"required_hd"}
 
     @override
-    def apply(
+    def _apply(
         self, model: pulp.LpProblem, x: Mapping[VarKey, pulp.LpVariable], ctx: Context
     ) -> None:
-        self.ensure_requires(ctx)
         # 各病院が必要な (病院, 日) ごとに、1人だけ割り当てる。
         required_hd = ctx["required_hd"]  # set((h,d), ...)
         by_hd = defaultdict(list)

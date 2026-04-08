@@ -21,7 +21,7 @@ class MaxAssignmentsPerWorkerHospital(ConstraintBase):
     requires: ClassVar[set[str]] = {"max_assignments"}
 
     @override
-    def apply(
+    def _apply(
         self, model: pulp.LpProblem, x: Mapping[VarKey, pulp.LpVariable], ctx: Context
     ) -> None:
         caps = ctx["max_assignments"]  # {(w,h): Optional[int]}

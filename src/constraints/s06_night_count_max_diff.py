@@ -39,7 +39,7 @@ class SoftNightCountMaxDiff(ConstraintBase):
         self.min_candidate_nights = int(min_candidate_nights)
 
     @override
-    def apply(
+    def _apply(
         self,
         model: pulp.LpProblem,
         x: Mapping[VarKey, pulp.LpVariable],

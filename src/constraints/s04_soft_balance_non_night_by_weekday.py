@@ -45,7 +45,7 @@ class SoftNonNightBalanceByWeekday(ConstraintBase):
         self.target_shifts = tuple(target_shifts)
 
     @override
-    def apply(
+    def _apply(
         self,
         model: pulp.LpProblem,
         x: Mapping[VarKey, pulp.LpVariable],
