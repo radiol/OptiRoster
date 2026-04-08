@@ -286,9 +286,13 @@ When `--xlsx` is specified, generates a formatted Excel file with:
 ### Soft Constraints (Optimization objectives)
 
 1. **Night spacing optimization**: Maximize gaps between night duties
-2. **Workload balancing**: Distribute assignments evenly
-3. **Day-of-week balancing**: Even distribution across weekdays
-4. **Preference optimization**: Favor "希望" (preferred) assignments
+2. **Workload balancing (weighted)**: Distribute night assignments evenly, counting holiday nights double
+3. **Workload balancing (unweighted)**: Equalize raw night duty counts across workers
+4. **Day-of-week balancing**: Even distribution across weekdays
+5. **Post-night rest**: Avoid Day/AM assignments the day after night duty
+6. **Consecutive holiday avoidance**: Avoid working two holiday shifts back-to-back
+7. **Consecutive remote avoidance**: Avoid back-to-back remote site assignments
+8. **University night limit**: Cap university hospital night duties at 3 units/month (night=1, holiday night=2)
 
 ## Troubleshooting
 
