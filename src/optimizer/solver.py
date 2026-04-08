@@ -54,7 +54,7 @@ def solve(
 
     # ソルバー選択
     if solver is None:
-        solver = pulp.PULP_CBC_CMD(msg=True)
+        solver = pulp.HiGHS(msg=False)
 
     # 実行時間計測
     start = time.time()
