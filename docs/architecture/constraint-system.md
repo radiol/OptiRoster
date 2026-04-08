@@ -118,10 +118,17 @@ class OnePersonPerHospital(ConstraintBase):
         for (h, _, d, _), var in x.items():
             by_hd[(h, d)].append(var)
 
-        # Add constraint: exactly one person per hospital per required date
+        # Shortage slack map stored in ctx for result reporting
+        slack_map: dict[tuple[str, date], pulp.LpVariable] = ctx.setdefault("shortage_slack", {})
+
+        # Add constraint: exactly one person per hospital per required date.
+        # A binary shortage slack variable s allows the constraint to be relaxed
+        # when no worker is available, making the model always feasible.
         for h, d in required_hd:
             vars_hd = by_hd.get((h, d), [])
-            model += pulp.lpSum(vars_hd) == 1, f"one_person_{h}_{d.strftime('%Y%m%d')}"
+            s = pulp.LpVariable(f"s_short_{h}_{d.strftime('%Y%m%d')}", lowBound=0, cat="Binary")
+            slack_map[(h, d)] = s
+            model += pulp.lpSum(vars_hd) + s == 1, f"one_person_{h}_{d.strftime('%Y%m%d')}"
 
 # Auto-registration when module is imported
 register(OnePersonPerHospital())
