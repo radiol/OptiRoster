@@ -16,3 +16,7 @@
 ## Development tool installation
 
 - Install development tools (lefthook, git-cliff, etc.) with `mise`.
+
+## GitHub CLI
+
+- `gh` is available for GitHub operations (PR creation, merge, checks, etc.).
