@@ -42,7 +42,7 @@ def _fixed(name: str, value: int) -> pulp.LpVariable:
 
 
 def test_penalty_when_two_holidays_over_limit(ensure_constraint):
-    """休日2回(weight=4) -> over=1, penalty=3.0."""
+    """休日2回(weight=4) -> over=1, penalty=10.0."""
     c = ensure_constraint(
         "src.constraints.s09_univ_night_weighted_count",
         SOURCE,
@@ -58,11 +58,11 @@ def test_penalty_when_two_holidays_over_limit(ensure_constraint):
 
     status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
-    assert abs(_sum_penalties(ctx) - 5.0) <= 1e-8
+    assert abs(_sum_penalties(ctx) - 10.0) <= 1e-8
 
 
 def test_penalty_two_units_over(ensure_constraint):
-    """休日2回+平日1回(weight=5) -> over=2, penalty=10.0."""
+    """休日2回+平日1回(weight=5) -> over=2, penalty=20.0."""
     c = ensure_constraint(
         "src.constraints.s09_univ_night_weighted_count",
         SOURCE,
@@ -79,7 +79,7 @@ def test_penalty_two_units_over(ensure_constraint):
 
     status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
-    assert abs(_sum_penalties(ctx) - 10.0) <= 1e-8
+    assert abs(_sum_penalties(ctx) - 20.0) <= 1e-8
 
 
 def test_multiple_workers_independent_penalties(ensure_constraint):
@@ -88,8 +88,8 @@ def test_multiple_workers_independent_penalties(ensure_constraint):
         "src.constraints.s09_univ_night_weighted_count",
         SOURCE,
     )
-    # Alice: 休日2回(weight=4) -> over=1, penalty=3.0
-    # Bob: 休日2回(weight=4) -> over=1, penalty=3.0
+    # Alice: 休日2回(weight=4) -> over=1, penalty=10.0
+    # Bob: 休日2回(weight=4) -> over=1, penalty=10.0
     x = {
         (UNIV.name, "Alice", SAT, ShiftType.NIGHT): _fixed("xa_sat", 1),
         (UNIV.name, "Alice", SUN, ShiftType.NIGHT): _fixed("xa_sun", 1),
@@ -103,7 +103,7 @@ def test_multiple_workers_independent_penalties(ensure_constraint):
 
     status = m.solve(pulp.HiGHS(msg=False))
     assert pulp.LpStatus[status] == "Optimal"
-    assert abs(_sum_penalties(ctx) - 10.0) <= 1e-8
+    assert abs(_sum_penalties(ctx) - 20.0) <= 1e-8
 
 
 # -- ペナルティが発生しないケース --

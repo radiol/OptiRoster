@@ -32,7 +32,7 @@ class SoftUnivNightWeightedCount(ConstraintBase):
         limit: int = 3,
         holiday_weight: int = 2,
         weekday_weight: int = 1,
-        weight: float = 5.0,
+        weight: float = 10.0,
     ):
         self.limit = int(limit)
         self.holiday_weight = int(holiday_weight)

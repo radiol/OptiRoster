@@ -31,7 +31,7 @@ class SoftNightSpacingPairs(ConstraintBase):
     summary = "当直間隔を可能な限り空ける"
     requires: ClassVar[set[str]] = {"days"}
 
-    def __init__(self, max_no_penalty_gap: int = 6, base_weight: float = 3.0):
+    def __init__(self, max_no_penalty_gap: int = 6, base_weight: float = 2.0):
         """
         max_no_penalty_gap: これ以上離れていればペナルティなし(デフォルト: 6 日以上)
         base_weight: 重みのスケール(Δ=1 のとき 5*base_weight、Δ=5 のとき 1*base_weight)
@@ -113,5 +113,5 @@ class SoftNightSpacingPairs(ConstraintBase):
         add_penalties(ctx, self.name, penalty_items)
 
 
-# デフォルト:6日以上はペナルティなし、Δ=1..5 に 5..1 のペナルティ
+# デフォルト:6日以上はペナルティなし、Δ=1..5 に 10..2 のペナルティ(base_weight=2.0)
 register(SoftNightSpacingPairs())
