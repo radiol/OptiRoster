@@ -5,7 +5,6 @@ from __future__ import annotations
 import datetime as dt
 
 import pulp
-import pytest
 
 from src.domain.types import Hospital, ShiftType
 from src.optimizer.objective import set_objective_with_penalties
@@ -20,7 +19,6 @@ LOCAL = Hospital(name="一般", is_remote=False, is_university=False, demand_rul
 SAT = dt.date(2025, 6, 7)
 SUN = dt.date(2025, 6, 8)
 MON = dt.date(2025, 6, 2)
-TUE = dt.date(2025, 6, 3)
 
 
 def _sum_penalties(ctx: dict, source: str = SOURCE) -> float:
