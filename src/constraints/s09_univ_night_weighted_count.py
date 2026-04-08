@@ -20,11 +20,11 @@ class SoftUnivNightWeightedCount(ConstraintBase):
     各workerの1ヶ月の重み付き合計回数がlimitを超えた場合に線形ペナルティを課す.
     - 休日(is_holiday_or_weekend=True): holiday_weight カウント(default=2)
     - 平日: weekday_weight カウント(default=1)
-    - 超過量 1 単位あたり weight のペナルティ(default=3.0)
+    - 超過量 1 単位あたり weight のペナルティ(default=5.0)
     """
 
     name = "soft_univ_night_weighted_count"
-    summary = "大学病院の当直回数を重み付きで月3回以下に制限"
+    summary = "大学病院の当直回数を月3コマ以下に制限(当直1コマ, 日当直2コマ)"
     requires: ClassVar[set[str]] = {"hospitals"}
 
     def __init__(
@@ -32,7 +32,7 @@ class SoftUnivNightWeightedCount(ConstraintBase):
         limit: int = 3,
         holiday_weight: int = 2,
         weekday_weight: int = 1,
-        weight: float = 3.0,
+        weight: float = 5.0,
     ):
         self.limit = int(limit)
         self.holiday_weight = int(holiday_weight)
@@ -65,9 +65,7 @@ class SoftUnivNightWeightedCount(ConstraintBase):
             weighted_sum = pulp.lpSum(dw * v for dw, v in wv_list)
             over = pulp.LpVariable(f"univ_night_wcount_over_{w}", lowBound=0)
             model += over >= weighted_sum - self.limit
-            penalty_items.append(
-                (over, self.weight, {"worker": w})
-            )
+            penalty_items.append((over, self.weight, {"worker": w}))
 
         add_penalties(ctx, self.name, penalty_items)
 
