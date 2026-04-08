@@ -9,6 +9,7 @@ lefthook-local.yml # lefthookの個人用設定ファイル
 
 # Claude
 .serena/
+.claude/settings.json
 
 # Python-generated files
 __pycache__/
