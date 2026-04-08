@@ -233,7 +233,7 @@ wheels = [
 
 [[package]]
 name = "optiroster"
-version = "0.1.0"
+version = "20260408.1"
 source = { virtual = "." }
 dependencies = [
     { name = "highspy" },
