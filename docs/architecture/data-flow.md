@@ -188,7 +188,7 @@ set_objective_with_penalties(model, base_obj, ctx)  # Add penalty terms
 ```python
 # src/optimizer/solver.py
 def solve(model, x, ctx):
-    solver = pulp.PULP_CBC_CMD(msg=False)  # CBC solver
+    solver = pulp.HiGHS(msg=False)  # HiGHS solver
     start = time.time()
     status_code = model.solve(solver)
     end = time.time()
@@ -201,13 +201,28 @@ def solve(model, x, ctx):
 
 ```python
 # Result aggregation
-total_penalty, by_source, rows = summarize_penalties(ctx)
+total_pen, by_src, rows = summarize_penalties(ctx)
+
+# Collect shortage slack values
+shortage_slack_dict = {}
+total_shortage = 0.0
+for (hospital, d), slack_var in ctx.get("shortage_slack", {}).items():
+    slack_value = float(pulp.value(slack_var) or 0)
+    if slack_value > 1e-6:
+        shortage_slack_dict[(hospital, d)] = slack_value
+        total_shortage += slack_value
+
 result = SolveResult(
     status=status,
-    objective_value=objective_value,
+    objective_value=obj_val,
     assignment=assignment,
-    penalty_breakdown=by_source,
-    solve_time=elapsed
+    shortage_slack=shortage_slack_dict,
+    total_shortage=total_shortage,
+    is_shortage=total_shortage > 1e-6,
+    total_penalty=float(total_pen),
+    penalty_by_source=by_src,
+    penalty_rows=rows,
+    solve_time=elapsed,
 )
 ```
 
@@ -378,7 +393,7 @@ ctx = Context(..., preferences=preferences, ...)
 
 - Worker-hospital assignment complexity
 - Number of active constraints
-- Solver efficiency (CBC default)
+- Solver efficiency (HiGHS default)
 - Constraint sparsity
 
 ## Error Handling and Recovery
