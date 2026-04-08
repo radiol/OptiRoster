@@ -147,9 +147,13 @@ register(OnePersonPerHospital())
 
 - `s01_night_spacing_pairs`: 当直間隔の最大化
 - `s02_soft_no_night_remote_daypm_same_day`: 同日の当直+遠隔地回避
-- `s03_night_deviation_band`: 当直割り当ての均等化
+- `s03_night_deviation_band`: 当直割り当ての均等化(重み付き)
 - `s04_soft_balance_non_night_by_weekday`: 曜日別割り当ての均等化
 - `s05_soft_no_duty_after_night`: 当直翌日の外勤(Day/AM)割り当てを回避
+- `s06_night_count_max_diff`: 当直回数の均等化(重みなし)
+- `s07_soft_no_consecutive_holiday_duty`: 連続する休日勤務の回避
+- `s08_soft_no_consecutive_remote`: 遠隔地の連続勤務の回避
+- `s09_univ_night_weighted_count`: 大学病院の当直を月3コマ以下に制限(当直1コマ、日当直2コマ換算)
 
 ## コンテキストシステム統合
 

@@ -147,9 +147,13 @@ Optimization objectives with penalties:
 
 - `s01_night_spacing_pairs`: Maximize night duty spacing
 - `s02_soft_no_night_remote_daypm_same_day`: Avoid night + remote on same day
-- `s03_night_deviation_band`: Balance night duty assignments
+- `s03_night_deviation_band`: Balance night duty assignments (weighted)
 - `s04_soft_balance_non_night_by_weekday`: Balance weekday assignments
 - `s05_soft_no_duty_after_night`: Avoid Day/AM duty assignments the day after night duty
+- `s06_night_count_max_diff`: Balance night duty assignments (unweighted)
+- `s07_soft_no_consecutive_holiday_duty`: Avoid consecutive holiday duties
+- `s08_soft_no_consecutive_remote`: Avoid consecutive remote assignments
+- `s09_univ_night_weighted_count`: Limit university hospital night duties to 3 units/month (night=1, holiday night=2)
 
 ## Context System Integration
 
