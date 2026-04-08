@@ -1,0 +1,256 @@
+## [unreleased]
+
+### ⚙️ Miscellaneous Tasks
+
+- Add project configuration for Claude, git-cliff, and mise
+## [20260408] - 2026-04-08
+
+### 🚀 Features
+
+- HiGHS ソルバーを最適化エンジンとして使用する
+- S09 大学病院当直の重み付き月間上限ソフト制約を追加
+- S09の超過ペナルティweightを3.0から5.0に変更
+
+### 🐛 Bug Fixes
+
+- CBCからHiGHSへデフォルトソルバーを変更
+
+### 🗑️ Deprecations
+
+- CsvEditorWindow を非推奨としてマーク
+
+### 📚 Documentation
+
+- 大学病院当直の重み付き月間上限ソフト制約の設計ドキュメントを追加
+- S09 大学病院当直の重み付き月間上限ソフト制約の実装計画を追加
+- ソフト制約リストとソルバー名をドキュメント全体で更新
+
+### 🎨 Styling
+
+- 未使用のimportと定数を削除
+
+### 🧪 Testing
+
+- テストのソルバーを CBC から HiGHS に変更
+- S09 大学病院当直の重み付き月間上限ソフト制約のテストを追加
+
+### ⚙️ Miscellaneous Tasks
+
+- CsvEditorWindow とそのテストを削除
+## [20260224] - 2026-02-24
+
+### 🚀 Features
+
+- Add build_hospital_worker_map pure logic with tests
+- Implement HospitalAssignmentEditorWindow with TDD
+- Replace CsvEditorWindow with HospitalAssignmentEditorWindow in SettingsTab
+- Collapse all-default hospital sections by default
+- Add Reload Workers button to HospitalAssignmentEditorWindow
+- Show weekdays next to worker name in canonical order (月,火,...,日)
+
+### 🚜 Refactor
+
+- *(tests)* Testsディレクトリをフラット化
+
+### 📚 Documentation
+
+- README の勤務回数上限エディタの説明を更新
+## [20260219] - 2026-02-19
+
+### 🚀 Features
+
+- *(csv-editor)* 行・列の追加/削除ボタンをツールバーに追加
+- *(csv-editor)* Name列を編集不可にする
+- *(csv-editor)* 選択セルの十字ハイライトとステータスバー表示を追加
+- *(constraints)* 連続休日勤務を避けるソフト制約 s07 を追加 (#29)
+- *(specified-editor)* 病院リストの並び替え機能を追加
+- *(workers-editor)* 勤務者リストとAssignmentリストの並び替え機能を追加
+- *(constraints)* Remote勤務の2日連続を抑制するソフト制約s08を追加
+
+### 🐛 Bug Fixes
+
+- 同一勤務者の複数行で当直希望判定が全行に適用される不具合を修正
+- *(gui)* Excel出力のデフォルト保存先をデスクトップに変更
+- *(s08)* デフォルト重みを1.0から0.5に変更
+
+### 🚜 Refactor
+
+- *(gui)* エディタ共通のファイル操作を BaseEditorWindow に集約
+- *(editors)* 並び替えメソッドを _move_hospital(delta) パターンに統一
+
+### 📚 Documentation
+
+- ソフト制約一覧に連続休日勤務回避の制約を追記
+- S08ソフト制約(遠隔地連続勤務回避)をREADMEに追記
+- *(README)* 構成を整理しGUI重視のレイアウトに変更
+- *(README)* 起動時の自動処理に関する説明を追記
+
+### 🎨 Styling
+
+- *(README.md)* テーブルのフォーマットを修正
+
+### 🧪 Testing
+
+- テストデータを修正し不必要な行を削除
+- *(s07)* 別worker交差ケースと逆方向片日勤務のテストを追加
+- *(s08)* エッジケースのテストを追加
+## [20260210] - 2026-02-10
+
+### 🐛 Bug Fixes
+
+- *(hospitals_editor)* 詳細ビューのシフト表から直接編集可能に
+- *(cli)* 年・月をCSVヘッダーから自動取得するように変更
+
+### 📚 Documentation
+
+- CLIオプション変更に合わせてREADMEを更新
+- 全ドキュメントからCLIの--year/--monthオプションを削除
+## [20260208] - 2026-02-08
+
+### 🚀 Features
+
+- アプリにアイコンを追加する
+- *(config)* Implement startup configuration generation
+
+### 🐛 Bug Fixes
+
+- *(excel)* 人員不足の赤色表示が休日の黄色で上書きされないよう修正
+- *(hospitals_editor)* シフト表のダブルクリックで編集ダイアログを表示
+
+### 🚜 Refactor
+
+- QApplicationのインポート順を変更
+- Ruff check --fixによるimportの修正
+
+### 📚 Documentation
+
+- Add copilot instructions for OptiRoster
+## [20260201] - 2026-02-01
+
+### 🚀 Features
+
+- 夜勤回数の最大・最小差を制約する機能追加
+- *(s06)* 制約のロジックを最大・最小の差から、平均から外れるか否かに変更
+- Add gui Paths dataclass (src/gui/common/paths.py)
+- Add hospitals/specified editors with roundtrip tests
+- Add WindowRegistry to prevent duplicate editors
+- Promote editor GUI classes to top-level + smoke tests + direct import in app.py
+- Add CsvEditorWindow with Open/Save/SaveAs and cell clear
+- Add workers.toml editor window
+- Wire workers editor and csv editor into SettingsTab
+- Rewrite hospitals editor from text to GUI editing
+- Rewrite specified-dates editor from text to GUI editing
+- *(gui)* カレンダーの初期表示を翌月に設定
+- *(workers)* ワーカーエディタにアサインメント機能を追加
+- *(io)* 病院データ書き込み機能を追加
+- *(io)* 勤務者データの書き込み機能を追加
+- *(io)* 勤務希望日(specified-dates.toml)への書き込み機能を追加
+- *(io)* 勤務回数上限csv(max-assignments.csv)の書き込み機能を追加
+- *(editor)* Add hospital selection functionality
+
+### 🚜 Refactor
+
+- テストのコメントを修正する
+- Replace SettingsTab with editor launcher + multi-launch prevention
+- Extract SettingsTab to src/gui/tabs/ with Paths+WindowRegistry DI
+- Extract MainWindow to src/gui/main_window.py, thin app.py to launcher
+- *(settings)* Update button organization in settings tab
+- *(hospitals_editor)* Replace dataclass with domain objects
+- *(workers_editor)* Migrate to domain types for worker assignments
+- *(csv_editor)* Improve CSV loading and saving logic
+- *(editor)* Simplify TOML loading and saving logic
+
+### 📚 Documentation
+
+- Update README.md
+- *(gui)* 新しいGUI仕様書を追加
+- READMEに設定エディタの使い方・ファイル仕様を追記
+- GUI設計概要のドキュメントを削除
+
+### 🎨 Styling
+
+- Summaryの文言を修正する
+- *(gui)* コードのフォーマットを統一
+- ボタンのテキストを日本語に変更
+
+### 🧪 Testing
+
+- Add Paths dataclass tests
+- Add workers editor IO tests
+- Add hospitals editor GUI conversion logic tests
+- Add specified editor GUI conversion logic tests
+- Add calendar UI logic tests (default month, cell visibility)
+
+### ⚙️ Miscellaneous Tasks
+
+- *(solver)* 処理の進捗把握のためソルバーのメッセージ出力を有効化
+- CIにPySide6の依存関係を追加
+- CIの依存関係を更新する
+- CI設定を更新してQtテストを追加
+## [20260115] - 2026-01-15
+
+### 🚀 Features
+
+- Gitインストールとリポジトリ更新機能を追加
+
+### 📚 Documentation
+
+- README.mdにcsvの重複データに関するNOTEを追加する
+
+### 🎨 Styling
+
+- [**breaking**] 用語を「日勤・当直不可」から「外勤・当直不可」に変更
+- コメント・ReadMeの記載も"外勤・当直不可"に修正する
+
+### 🧪 Testing
+
+- 勤務希望csvに重複した名前があった場合、後の行(新しいデータ)が優先されることを確認
+## [20251222] - 2025-12-22
+
+### 🐛 Bug Fixes
+
+- *(calendar/utils)* 年末年始の祝日判定が12月28日からになっていたので12月29日からに修正
+
+### 🚜 Refactor
+
+- *(s03)* 変数名を変更しメソッドをリファクタリング
+
+### 📚 Documentation
+
+- *(s03)* 休日の重みの説明を更新
+
+### 🧪 Testing
+
+- 祝日でない日を確認するテストを追加
+
+### ⚙️ Miscellaneous Tasks
+
+- *(preferences_loader)* 当直希望の条件分岐にコメントを記載
+## [20251220] - 2025-12-19
+
+### 🚀 Features
+
+- 年末年始の祝日判定機能を追加
+- *(launch-gui)* CI用のインポート確認機能を追加
+- CIモードでのuvインストールスクリプトを追加
+
+### 🐛 Bug Fixes
+
+- 休日の日当直と日勤・AM・PMが重複しないように修正
+- *(calendar/utils.py)* 年末年始の休日がis_public_holidayで祝日判定されるように修正
+
+### 🚜 Refactor
+
+- *(launch-gui.bat)* スクリプトの改善と整理
+
+### 🎨 Styling
+
+- コードのフォーマットを改善する
+
+### ⚙️ Miscellaneous Tasks
+
+- Update uv.lock file
+- 不要な.gitignoreエントリを削除
+- Windows smoke test workflowを追加
+- MacOS CIワークフローを追加する
+- CI設定ファイルを追加(ruff check, pytest)
