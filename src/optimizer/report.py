@@ -10,7 +10,7 @@ def summarize_penalties(
     ctx: Context, sources: list[str] | None = None
 ) -> tuple[float, dict[str, float], list[dict[str, Any]]]:
     """
-    ctx["penaltcies"] を集計して (total, by_source, rows) を返す。
+    ctx["penalties"] を集計して (total, by_source, rows) を返す。
     rows は {"source","var","value","weight","penalty",**meta} の辞書列。
     """
     rows = []
